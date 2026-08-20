@@ -1,0 +1,326 @@
+<!-- admin.html - Dashboard dengan Diagram -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bank Sampah Digital - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-admin.css">
+    <!-- Chart.js untuk grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="dashboard admin-dashboard">
+        <!-- Header -->
+        <header class="dashboard-header header-admin">
+            <div class="header-content">
+                <div>
+                    <div class="header-label">ADMINISTRATOR</div>
+                    <div class="header-title">Dashboard Bank Sampah</div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="showToast('Notifikasi', false)">
+                        <i class="fa-regular fa-bell"></i>
+                    </button>
+                    <button class="icon-btn" onclick="logoutUser()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Wallet Card -->
+        <section class="wallet-card admin-wallet">
+            <div class="wallet-title">Ringkasan Dompet Global</div>
+            <div class="wallet-balance" id="adminSaldoGlobal">Rp 0</div>
+        </section>
+
+        <!-- Statistik Cards -->
+        <div class="stats-grid-4" style="padding:0 16px 12px;">
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
+                <div class="stat-value" id="adminStatDiverifikasi">0</div>
+                <div class="stat-label">Diverifikasi</div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-value" id="adminStatMenunggu">0</div>
+                <div class="stat-label">Menunggu</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-icon"><i class="fa-solid fa-xmark-circle"></i></div>
+                <div class="stat-value" id="adminStatDitolak">0</div>
+                <div class="stat-label">Ditolak</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-value" id="adminStatTotalNasabah">0</div>
+                <div class="stat-label">Total Nasabah</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <main class="dashboard-content">
+            <!-- Tabs -->
+            <div class="tab-container">
+                <button class="tab-btn active" data-tab="admin-dashboard" onclick="switchAdminTab('dashboard')">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="admin-verifikasi" onclick="switchAdminTab('verifikasi')">
+                    <i class="fa-solid fa-check-double"></i> Verifikasi
+                </button>
+                <button class="tab-btn" data-tab="admin-harga" onclick="switchAdminTab('harga')">
+                    <i class="fa-solid fa-tags"></i> Harga
+                </button>
+                <button class="tab-btn" data-tab="admin-bsu" onclick="switchAdminTab('bsu')">
+                    <i class="fa-solid fa-building"></i> BSU
+                </button>
+                <button class="tab-btn" data-tab="admin-nasabah" onclick="switchAdminTab('nasabah')">
+                    <i class="fa-solid fa-users"></i> Nasabah
+                </button>
+                <button class="tab-btn" data-tab="admin-laporan" onclick="switchAdminTab('laporan')">
+                    <i class="fa-solid fa-file-lines"></i> Laporan
+                </button>
+            </div>
+
+            <!-- TAB: DASHBOARD (DENGAN DIAGRAM) -->
+            <div id="admin-dashboard" class="tab-content active">
+
+                <!-- Grafik 1: Status Transaksi (Pie Chart) -->
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <span> Status Transaksi</span>
+                        <span style="font-size:9px;color:#94a3b8;">Total: <span id="totalTransaksiStatus">0</span></span>
+                    </div>
+                    <div style="position:relative;height:180px;max-width:280px;margin:0 auto;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafik 2: Transaksi per BSU (Bar Chart) -->
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <span> Transaksi per BSU</span>
+                        <span style="font-size:9px;color:#94a3b8;">Total BSU: <span id="totalBSUCount">0</span></span>
+                    </div>
+                    <div style="position:relative;height:150px;">
+                        <canvas id="bsuChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafik 3: Trend Bulanan (Line Chart) -->
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <span> Trend Transaksi per Bulan</span>
+                        <span style="font-size:9px;color:#94a3b8;">6 bulan terakhir</span>
+                    </div>
+                    <div style="position:relative;height:150px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top 5 Nasabah -->
+                <div class="section-header">
+                    <h3> Top 5 Nasabah dengan Setoran Tertinggi</h3>
+                </div>
+                <div id="topNasabahList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-trophy"></i>
+                        <p>Belum ada data nasabah</p>
+                    </div>
+                </div>
+
+                <!-- Ringkasan per Jenis Sampah -->
+                <div class="section-header" style="margin-top:12px;">
+                    <h3> Ringkasan per Jenis Sampah</h3>
+                </div>
+                <div id="ringkasanJenisSampah">
+                    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+                        <div class="stat-card purple">
+                            <div class="stat-icon"><i class="fa-solid fa-recycle"></i></div>
+                            <div class="stat-value" id="statPlastik">0 kg</div>
+                            <div class="stat-label">Plastik</div>
+                        </div>
+                        <div class="stat-card teal">
+                            <div class="stat-icon"><i class="fa-solid fa-gear"></i></div>
+                            <div class="stat-value" id="statLogam">0 kg</div>
+                            <div class="stat-label">Logam</div>
+                        </div>
+                        <div class="stat-card orange">
+                            <div class="stat-icon"><i class="fa-solid fa-file"></i></div>
+                            <div class="stat-value" id="statKertas">0 kg</div>
+                            <div class="stat-label">Kertas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Verifikasi -->
+            <div id="admin-verifikasi" class="tab-content">
+                <div class="section-header">
+                    <h3>Verifikasi Data Sampah</h3>
+                    <span class="badge-count" id="adminVerifikasiCount">Menunggu: 0</span>
+                </div>
+                <div id="adminVerifikasiList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <p>Tidak ada data menunggu verifikasi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Harga Sampah -->
+            <div id="admin-harga" class="tab-content">
+                <div class="section-header">
+                    <h3>Atur Data Harga Sampah</h3>
+                </div>
+                <div class="filter-row">
+                    <select id="hargaFilterJenis" class="form-control" onchange="renderHargaSampah()">
+                        <option value="plastik">Plastik</option>
+                        <option value="logam">Logam</option>
+                        <option value="kertas">Kertas</option>
+                    </select>
+                    <input type="text" id="hargaSearch" class="form-control" placeholder="Cari sampah..." oninput="renderHargaSampah()">
+                </div>
+                <div id="hargaSampahList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-search"></i>
+                        <p>Tidak ada data</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Data BSU -->
+            <div id="admin-bsu" class="tab-content">
+                <div class="section-header">
+                    <h3>Data BSU</h3>
+                </div>
+                <div class="filter-row">
+                    <select id="filterBSU" class="form-control" onchange="renderDataBSU()">
+                        <option value="all">Semua BSU</option>
+                    </select>
+                    <select id="filterRW" class="form-control" onchange="renderDataBSU()">
+                        <option value="all">Semua RW</option>
+                    </select>
+                    <select id="filterRT" class="form-control" onchange="renderDataBSU()">
+                        <option value="all">Semua RT</option>
+                    </select>
+                </div>
+                <div id="bsuDataList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-building"></i>
+                        <p>Tidak ada data BSU</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Data Nasabah -->
+            <div id="admin-nasabah" class="tab-content">
+                <div class="section-header">
+                    <h3>Data Nasabah</h3>
+                    <button class="btn-excel btn-sm" onclick="exportAdminNasabahRekap()">
+                        <i class="fa-solid fa-file-excel"></i> Export
+                    </button>
+                </div>
+                <div id="adminNasabahList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <p>Tidak ada data nasabah</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Laporan -->
+            <div id="admin-laporan" class="tab-content">
+                <div class="section-header">
+                    <h3><i class="fa-solid fa-file-lines"></i> Ekspor Laporan</h3>
+                    <span style="font-size:9px;color:#94a3b8;">Pilih format laporan yang ingin diekspor</span>
+                </div>
+                <div class="filter-row" style="margin-bottom:12px;">
+                    <select id="filterPeriodeLaporan" class="form-control">
+                        <option value="mingguan">Mingguan</option>
+                        <option value="bulanan">Bulanan</option>
+                        <option value="tahunan">Tahunan</option>
+                        <option value="semua">Semua Data</option>
+                    </select>
+                    <select id="filterBSULaporan" class="form-control">
+                        <option value="all">Semua BSU</option>
+                    </select>
+                </div>
+                <div class="laporan-section">
+                    <div class="laporan-grid">
+                        <div class="laporan-card excel" onclick="exportAdminLaporan('excel')">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <div class="laporan-label">Excel</div>
+                            <div class="laporan-desc">.xls</div>
+                        </div>
+                        <div class="laporan-card pdf" onclick="exportAdminLaporan('pdf')">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <div class="laporan-label">PDF</div>
+                            <div class="laporan-desc">.pdf</div>
+                        </div>
+                        <div class="laporan-card word" onclick="exportAdminLaporan('word')">
+                            <i class="fa-solid fa-file-word"></i>
+                            <div class="laporan-label">Word</div>
+                            <div class="laporan-desc">.doc</div>
+                        </div>
+                        <div class="laporan-card full" onclick="exportAdminLaporan('full')">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <div class="laporan-label">Full Report</div>
+                            <div class="laporan-desc">Semua data</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchAdminTab('dashboard')">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="switchAdminTab('verifikasi')">
+                <i class="fa-solid fa-check-double"></i>
+                <span>Verifikasi</span>
+            </div>
+            <div class="nav-item" onclick="switchAdminTab('bsu')">
+                <i class="fa-solid fa-building"></i>
+                <span>BSU</span>
+            </div>
+            <div class="nav-item" onclick="switchAdminTab('nasabah')">
+                <i class="fa-solid fa-users"></i>
+                <span>Nasabah</span>
+            </div>
+            <div class="nav-item" onclick="switchAdminTab('laporan')">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Laporan</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="data-bsu.js"></script>
+    <script src="data-harga.js"></script>
+    <script src="data-sampah-list.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="laporan.js"></script>
+    <script src="login.js"></script>
+    <script src="dashboard-admin.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSession();
+            renderAdmin();
+        });
+    </script>
+
+</body>
+</html>

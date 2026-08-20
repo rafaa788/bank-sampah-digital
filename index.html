@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bank Sampah Digital - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlide 0.3s ease;
+        }
+        @keyframes modalSlide {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+            border-radius: 16px 16px 0 0;
+        }
+        .modal-header h3 { font-size: 16px; color: #0d9488; }
+        .modal-header h3 i { margin-right: 8px; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 0 8px;
+        }
+        .modal-close:hover { color: #1e293b; }
+        .modal-body { padding: 16px 20px; }
+        .modal-footer {
+            padding: 12px 20px 16px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-radius: 0 0 16px 16px;
+        }
+        .modal-footer .btn-primary,
+        .modal-footer .btn-secondary {
+            width: auto;
+            padding: 8px 20px;
+            margin-top: 0;
+        }
+        .modal-footer .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .modal-footer .btn-secondary:hover { background: #e2e8f0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .form-group small { display: block; margin-top: 2px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-group.half { flex: 1; }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .form-control:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
+        }
+        .form-control[readonly] {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+        textarea.form-control { resize: vertical; min-height: 50px; }
+        .btn-primary {
+            background: #0d9488;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary:hover { background: #0f766e; }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:hover { background: #e2e8f0; }
+        #daftarSuccess {
+            display: none;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #86efac;
+        }
+        #daftarError {
+            display: none;
+            background: #fecaca;
+            color: #dc2626;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #f87171;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: #dc2626; }
+        .toast.success { background: #16a34a; }
+        .toast.warning { background: #d97706; }
+        .quick-login-hint {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-page">
+        <div class="login-wrapper">
+            <div class="brand-section">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h1 class="brand-title">Bank Sampah Digital</h1>
+                <p class="brand-subtitle">Desa Gunung Putri</p>
+            </div>
+
+            <div class="login-card">
+                <h3><i class="fa-solid fa-right-to-bracket"></i> Masuk ke Akun</h3>
+                
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="loginUsername" placeholder="Username">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Password">
+                </div>
+                
+                <button class="btn-primary" onclick="handleLogin()" style="width:100%;justify-content:center;padding:11px;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk
+                </button>
+                
+                <button class="btn-secondary" onclick="bukaModalDaftar()" style="width:100%;justify-content:center;padding:11px;margin-top:8px;">
+                    <i class="fa-solid fa-user-plus"></i> Daftar Akun Baru
+                </button>
+            </div>
+
+            <div class="quick-login">
+                <p class="quick-label">⚡ Quick Login (Isi Form Otomatis)</p>
+                <div class="quick-grid">
+                    <div class="quick-card" onclick="quickLogin('nasabah')">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Nasabah</span>
+                        <small>Isi form</small>
+                    </div>
+                    <div class="quick-card" onclick="quickLogin('pengelola')">
+                        <i class="fa-solid fa-building-user"></i>
+                        <span>Pengelola</span>
+                        <small>Isi form</small>
+                    </div>
+                    <div class="quick-card" onclick="quickLogin('admin')">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Admin</span>
+                        <small>Isi form</small>
+                    </div>
+                </div>
+                <p class="quick-login-hint">
+                    ⚠️ Quick Login hanya mengisi form, tetap klik <strong>"Masuk"</strong> untuk login
+                </p>
+            </div>
+
+            <div class="account-info">
+                <details>
+                    <summary><i class="fa-solid fa-key"></i> Lihat Akun Demo</summary>
+                    <div class="account-list">
+                        <div class="account-item">
+                            <span class="role-badge admin">Admin</span>
+                            <span class="cred">admin / admin123</span>
+                        </div>
+                        <div class="account-item">
+                            <span class="role-badge pengelola">BSU</span>
+                            <span class="cred">mede1 / mede123</span>
+                        </div>
+                        <div class="account-item" style="color:#f59e0b;">
+                            <span class="role-badge nasabah">Nasabah</span>
+                            <span class="cred">⚠️ Daftar akun terlebih dahulu</span>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="login-footer">
+                <p>&copy; 2026 Bank Sampah Digital - BSI Mandiri</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Daftar -->
+    <div id="modalDaftar" class="modal-overlay" onclick="if(event.target===this) tutupModalDaftar()">
+        <div class="modal-content" style="max-width:480px;max-height:90vh;overflow-y:auto;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> Daftar Akun Nasabah</h3>
+                <button class="modal-close" onclick="tutupModalDaftar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="daftarSuccess"></div>
+                <div id="daftarError"></div>
+                <div class="form-group">
+                    <label>Nama Lengkap <span style="color:red;">*</span></label>
+                    <input type="text" id="daftarNama" class="form-control" placeholder="Masukkan nama lengkap">
+                    <small style="color:#94a3b8;font-size:9px;">Nama akan digunakan untuk identifikasi di BSU</small>
+                </div>
+                <div class="form-group">
+                    <label>Username <span style="color:red;">*</span></label>
+                    <input type="text" id="daftarUsername" class="form-control" placeholder="Pilih username unik">
+                    <small style="color:#94a3b8;font-size:9px;">Minimal 3 karakter, huruf/angka/underscore</small>
+                </div>
+                <div class="form-group">
+                    <label>Password <span style="color:red;">*</span></label>
+                    <input type="password" id="daftarPassword" class="form-control" placeholder="Buat password (min 4 karakter)">
+                </div>
+                <div class="form-group">
+                    <label>Konfirmasi Password <span style="color:red;">*</span></label>
+                    <input type="password" id="daftarPasswordConfirm" class="form-control" placeholder="Konfirmasi password">
+                </div>
+                <div class="form-group">
+                    <label>Pilih BSU <span style="color:red;">*</span></label>
+                    <select id="daftarBSU" class="form-control">
+                        <option value="">-- Pilih BSU --</option>
+                    </select>
+                    <small style="color:#94a3b8;font-size:9px;">Pilih BSU tempat Anda akan menabung sampah</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>RW <span style="color:red;">*</span></label>
+                        <input type="text" id="daftarRW" class="form-control" placeholder="Contoh: RW01" readonly>
+                        <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
+                    </div>
+                    <div class="form-group half">
+                        <label>RT <span style="color:red;">*</span></label>
+                        <input type="text" id="daftarRT" class="form-control" placeholder="Contoh: RT01" readonly>
+                        <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ketua BSU</label>
+                    <input type="text" id="daftarKetua" class="form-control" readonly>
+                    <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
+                </div>
+                <div class="form-group">
+                    <label>Alamat</label>
+                    <textarea id="daftarAlamat" class="form-control" placeholder="Masukkan alamat lengkap" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>No. HP</label>
+                    <input type="text" id="daftarNoHP" class="form-control" placeholder="Masukkan nomor HP aktif">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="tutupModalDaftar()">Batal</button>
+                <button class="btn-primary" onclick="daftarNasabah()">
+                    <i class="fa-solid fa-user-plus"></i> Daftar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+
+<!-- URUTAN SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+<script src="supabase-client.js"></script>
+<script src="data-bsu.js"></script>
+<script src="data-harga.js"></script>
+<script src="data-sampah-list.js"></script>
+<script src="data.js"></script>
+<script src="main.js"></script>
+<script src="laporan.js"></script>
+<script src="login.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        checkSession();
+        console.log('📋 Jumlah BSU:', window.dataBSU ? window.dataBSU.length : 0);
+        
+        // ===== SYNC DATA DARI SUPABASE =====
+        console.log('🔄 Syncing data from Supabase...');
+        
+        try {
+            // Sync nasabah
+            if (window.syncNasabahFromSupabase) {
+                await window.syncNasabahFromSupabase();
+            }
+            
+            // Sync transaksi
+            if (window.syncTransaksiFromSupabase) {
+                await window.syncTransaksiFromSupabase();
+            }
+            
+            console.log('✅ Data synced successfully');
+            console.log('👤 Total Nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
+            console.log('📄 Total Transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
+        } catch (e) {
+            console.warn('⚠️ Gagal sync data:', e.message);
+        }
+        
+        // Seed data awal jika belum ada (tapi hanya jika ada koneksi Supabase)
+        if (window.db && window.db.seedInitialData) {
+            try {
+                await window.db.seedInitialData();
+            } catch (e) {
+                console.log('Seed data skipped or failed');
+            }
+        }
+        
+        // Debug helper
+        console.log('💡 Ketik cekDataNasabah() di console untuk melihat data nasabah');
+    });
+</script>

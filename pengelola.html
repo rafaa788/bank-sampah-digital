@@ -1,0 +1,367 @@
+<!-- pengelola.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bank Sampah Digital - Pengelola BSU</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-pengelola.css">
+</head>
+<body>
+
+    <div class="dashboard pengelola-dashboard">
+        <!-- Header -->
+        <header class="dashboard-header header-pengelola">
+            <div class="header-content">
+                <div>
+                    <div class="header-label">Pengelola BSU</div>
+                    <div class="header-title" id="pengelolaNamaBSU">"BSU MEDE 1"</div>
+                    <div style="font-size:10px;opacity:0.8;margin-top:2px;" id="pengelolaKetua">Ketua: Bapak Slamet</div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="showToast('Notifikasi', false)">
+                        <i class="fa-regular fa-bell"></i>
+                    </button>
+                    <button class="icon-btn" onclick="logoutUser()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Wallet Card -->
+        <section class="wallet-card">
+            <div class="wallet-title">Dompet Operasional</div>
+            <div class="wallet-balance" id="pengelolaSaldo">Rp 0</div>
+            <div class="wallet-actions">
+                <button class="wallet-btn" style="background:#15803d;color:white;" onclick="showToast('Pencairan ke Kas BSU', false)">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Pencairan
+                </button>
+            </div>
+        </section>
+
+        <!-- Content -->
+        <main class="dashboard-content">
+            <!-- Tabs -->
+            <div class="tab-container">
+                <button class="tab-btn active" data-tab="pengelola-dashboard" onclick="switchPengelolaTab('dashboard')">
+                    <i class="fa-solid fa-chart-simple"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="pengelola-setoran" onclick="switchPengelolaTab('setoran')">
+                    <i class="fa-solid fa-list"></i> Setoran
+                </button>
+                <button class="tab-btn" data-tab="pengelola-input" onclick="switchPengelolaTab('input')">
+                    <i class="fa-solid fa-plus"></i> Input
+                </button>
+                <button class="tab-btn" data-tab="pengelola-nasabah" onclick="switchPengelolaTab('nasabah')">
+                    <i class="fa-solid fa-users"></i> Nasabah
+                </button>
+                <button class="tab-btn" data-tab="pengelola-laporan" onclick="switchPengelolaTab('laporan')">
+                    <i class="fa-solid fa-file-lines"></i> Laporan
+                </button>
+            </div>
+
+            <!-- Tab: Dashboard (STATISTIK + REKAP TRANSAKSI) -->
+            <div id="pengelola-dashboard" class="tab-content active">
+                <!-- Statistik Grid -->
+                <div class="stats-grid-4">
+                    <div class="stat-card green">
+                        <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="stat-value" id="statDiverifikasi">0</div>
+                        <div class="stat-label">Diverifikasi</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="stat-value" id="statMenunggu">0</div>
+                        <div class="stat-label">Menunggu</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon"><i class="fa-solid fa-xmark-circle"></i></div>
+                        <div class="stat-value" id="statDitolak">0</div>
+                        <div class="stat-label">Ditolak</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="stat-value" id="statTotalNasabah">0</div>
+                        <div class="stat-label">Total Nasabah</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card purple">
+                        <div class="stat-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                        <div class="stat-value" id="statTotalBerat">0 kg</div>
+                        <div class="stat-label">Total Berat</div>
+                    </div>
+                    <div class="stat-card teal">
+                        <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="stat-value" id="statTotalNilai">Rp 0</div>
+                        <div class="stat-label">Total Nilai</div>
+                    </div>
+                </div>
+
+                <!-- Rekap Transaksi Diverifikasi -->
+                <div class="section-header">
+                    <h3>Rekap Transaksi Diverifikasi</h3>
+                    <span style="font-size:9px;color:#94a3b8;" id="statTotalTransaksi">Total: 0</span>
+                </div>
+                <div id="pengelolaRekapList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <p>Belum ada transaksi yang diverifikasi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Setoran -->
+            <div id="pengelola-setoran" class="tab-content">
+                <div class="section-header">
+                    <h3>Setoran Terbaru</h3>
+                    <a href="#" class="see-all" onclick="showToast('Lihat semua setoran', false)">View all</a>
+                </div>
+                <div id="pengelolaSetoranList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>Belum ada setoran</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+        <!-- Tab: Input Sampah -->
+        <div id="pengelola-input" class="tab-content">
+            <div class="section-header">
+                <h3>Input Data Sampah</h3>
+                <span style="font-size:9px;color:#64748b;">Ketua: <span id="inputKetuaDisplay">Bapak Slamet</span></span>
+            </div>
+            <div class="input-form">
+      
+        <input type="hidden" id="inputKetua" value="">
+        
+        <div class="form-group">
+            <label for="inputNasabah">Nama Nasabah</label>
+            <select id="inputNasabah" class="form-control">
+                <option value="">✏️ Input Manual (Ketik Nama)</option>
+                <option value="" disabled style="color:#94a3b8;">── Daftar Nasabah ──</option>
+                <option value="" disabled>⚠️ Belum ada nasabah terdaftar</option>
+            </select>
+            <small style="color:#94a3b8;font-size:9px;">💡 Pilih nasabah dari daftar atau kosongkan untuk input manual</small>
+        </div>
+        <div class="form-group">
+            <label>Jenis Sampah</label>
+            <select id="inputJenis" class="form-control" onchange="updateSampahList()">
+                <option value="plastik">Plastik</option>
+                <option value="logam">Logam</option>
+                <option value="kertas">Kertas</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nama Sampah</label>
+            <select id="inputNamaSampah" class="form-control" onchange="updateHargaOtomatis()">
+                <option value="">Pilih Nama Sampah</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group half">
+                <label>Berat (kg)</label>
+                <input type="number" id="inputBerat" class="form-control" placeholder="0" step="0.1" oninput="updateHargaOtomatis()">
+            </div>
+            <div class="form-group half">
+                <label>Harga / Kg</label>
+                <input type="text" id="inputHarga" class="form-control" readonly>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Total Nilai</label>
+            <input type="text" id="inputTotal" class="form-control" readonly>
+        </div>
+        
+        <!-- FOTO TIMBANG -->
+        <div class="form-group">
+            <label>Foto Timbang</label>
+            <input type="file" id="fotoTimbang" class="form-control" accept="image/*" capture="environment">
+            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+            <div style="margin-top:5px;">
+                <img id="previewTimbang" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+            </div>
+        </div>
+        
+        <!-- FOTO HASIL -->
+        <div class="form-group">
+            <label>Foto Hasil</label>
+            <input type="file" id="fotoHasil" class="form-control" accept="image/*" capture="environment">
+            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+            <div style="margin-top:5px;">
+                <img id="previewHasil" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+            </div>
+        </div>
+        
+        <!-- FOTO BUKTI -->
+        <div class="form-group">
+            <label>Foto Bukti</label>
+            <input type="file" id="fotoBukti" class="form-control" accept="image/*" capture="environment">
+            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+            <div style="margin-top:5px;">
+                <img id="previewBukti" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+            </div>
+        </div>
+        
+        <button class="btn-primary btn-block" onclick="submitDataSampah()">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Data Sampah
+        </button>
+    </div>
+</div>
+
+            <!-- Tab: Nasabah -->
+            <div id="pengelola-nasabah" class="tab-content">
+                <div class="section-header">
+                    <h3>Data Nasabah</h3>
+                    <span style="font-size:9px;color:#94a3b8;" id="nasabahCount">Total: 0</span>
+                </div>
+                <div id="pengelolaNasabahList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <p>Belum ada nasabah terdaftar di BSU ini</p>
+                        <p style="font-size:10px;color:#94a3b8;margin-top:4px;">💡 Silakan daftar akun nasabah terlebih dahulu</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Laporan (TERPISAH) -->
+            <div id="pengelola-laporan" class="tab-content">
+                <div class="section-header">
+                    <h3><i class="fa-solid fa-file-lines"></i> Ekspor Laporan</h3>
+                    <span style="font-size:9px;color:#94a3b8;">Pilih format laporan yang ingin diekspor</span>
+                </div>
+
+                <!-- Laporan Mingguan -->
+                <div class="laporan-section">
+                    <div class="section-header">
+                        <h3> Laporan Mingguan</h3>
+                    </div>
+                    <div class="laporan-grid">
+                        <div class="laporan-card excel" onclick="exportPengelolaLaporan('mingguan')">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <div class="laporan-label">Excel</div>
+                            <div class="laporan-desc">.xls</div>
+                        </div>
+                        <div class="laporan-card pdf" onclick="exportPengelolaLaporanPDF('mingguan')">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <div class="laporan-label">PDF</div>
+                            <div class="laporan-desc">.pdf</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laporan Bulanan -->
+                <div class="laporan-section">
+                    <div class="section-header">
+                        <h3> Laporan Bulanan</h3>
+                    </div>
+                    <div class="laporan-grid">
+                        <div class="laporan-card excel" onclick="exportPengelolaLaporan('bulanan')">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <div class="laporan-label">Excel</div>
+                            <div class="laporan-desc">.xls</div>
+                        </div>
+                        <div class="laporan-card pdf" onclick="exportPengelolaLaporanPDF('bulanan')">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <div class="laporan-label">PDF</div>
+                            <div class="laporan-desc">.pdf</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laporan Tahunan -->
+                <div class="laporan-section">
+                    <div class="section-header">
+                        <h3> Laporan Tahunan</h3>
+                    </div>
+                    <div class="laporan-grid">
+                        <div class="laporan-card excel" onclick="exportPengelolaLaporan('tahunan')">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <div class="laporan-label">Excel</div>
+                            <div class="laporan-desc">.xls</div>
+                        </div>
+                        <div class="laporan-card pdf" onclick="exportPengelolaLaporanPDF('tahunan')">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <div class="laporan-label">PDF</div>
+                            <div class="laporan-desc">.pdf</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laporan Full -->
+                <div class="laporan-section">
+                    <div class="section-header">
+                        <h3> Laporan Lengkap</h3>
+                    </div>
+                    <div class="laporan-grid">
+                        <div class="laporan-card full" onclick="exportPengelolaLaporan('full')">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <div class="laporan-label">Full Report</div>
+                            <div class="laporan-desc">Semua data</div>
+                        </div>
+                        <div class="laporan-card word" onclick="exportPengelolaLaporanPDF('full')">
+                            <i class="fa-solid fa-file-word"></i>
+                            <div class="laporan-label">Word</div>
+                            <div class="laporan-desc">.doc</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!--- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-nav="dashboard" onclick="switchPengelolaTab('dashboard')">
+            <i class="fa-solid fa-chart-simple"></i>
+            <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-nav="setoran" onclick="switchPengelolaTab('setoran')">
+            <i class="fa-solid fa-list"></i>
+            <span>Setoran</span>
+        </div>
+        <div class="nav-fab" data-nav="input" onclick="switchPengelolaTab('input')">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+        <div class="nav-item" data-nav="nasabah" onclick="switchPengelolaTab('nasabah')">
+            <i class="fa-solid fa-users"></i>
+            <span>Nasabah</span>
+        </div>
+        <div class="nav-item" data-nav="laporan" onclick="switchPengelolaTab('laporan')">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Laporan</span>
+        </div>
+    </nav>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="data-bsu.js"></script>
+    <script src="data-harga.js"></script>
+    <script src="data-sampah-list.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="laporan.js"></script>
+    <script src="login.js"></script>
+    <script src="dashboard-pengelola.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSession();
+            renderPengelola();
+            
+            var ketua = sessionStorage.getItem('bsuKetua') || 'Ketua BSU';
+            document.getElementById('inputKetuaDisplay').textContent = ketua;
+        });
+    </script>
+
+</body>
+</html>

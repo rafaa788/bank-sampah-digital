@@ -1,0 +1,288 @@
+<!-- nasabah.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bank Sampah Digital - Nasabah</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-nasabah.css">
+</head>
+<body>
+
+    <div class="dashboard nasabah-dashboard">
+        <!-- Header -->
+        <header class="dashboard-header header-nasabah">
+            <div class="header-content">
+                <div class="user-profile">
+                    <div class="avatar" id="nasabahAvatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="user-name" id="nasabahNama">Halo, Nasabah!</div>
+                        <div class="user-greeting" id="nasabahGreeting">Selamat Pagi</div>
+                        <div style="font-size:8px;opacity:0.7;" id="nasabahBsuInfo">📍 BSU MEDE 1</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="nasabahService('profil')">
+                        <i class="fa-solid fa-user"></i>
+                    </button>
+                    <button class="icon-btn" onclick="logoutUser()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Wallet Card -->
+        <section class="wallet-card">
+            <div class="wallet-title">Dompet Digital</div>
+            <div class="wallet-balance" id="nasabahSaldo">Rp 0</div>
+            <div class="wallet-actions">
+                <button class="wallet-btn" onclick="showToast('Fitur Tarik Saldo', false)">
+                    <i class="fa-solid fa-wallet"></i> Tarik Saldo
+                </button>
+                <button class="wallet-btn" onclick="nasabahService('riwayat')">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat
+                </button>
+            </div>
+        </section>
+
+        <!-- Statistik Pribadi -->
+        <div class="stats-grid-4" style="padding:0 16px 12px;">
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
+                <div class="stat-value" id="statTotalTransaksi">0</div>
+                <div class="stat-label">Transaksi</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                <div class="stat-value" id="statTotalBerat">0 kg</div>
+                <div class="stat-label">Total Berat</div>
+            </div>
+            <div class="stat-card teal">
+                <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="stat-value" id="statTotalNilai">Rp 0</div>
+                <div class="stat-label">Total Nilai</div>
+            </div>
+            <div class="stat-card blue" onclick="nasabahService('profil')" style="cursor:pointer;">
+                <div class="stat-icon"><i class="fa-solid fa-user"></i></div>
+                <div class="stat-value" style="font-size:11px;">👤 Profil</div>
+                <div class="stat-label">Klik untuk lihat</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <main class="dashboard-content">
+            <!-- Tabs -->
+            <div class="tab-container">
+                <button class="tab-btn active" data-tab="nasabah-beranda" onclick="switchNasabahTab('beranda')">
+                    <i class="fa-solid fa-house"></i> Beranda
+                </button>
+                <button class="tab-btn" data-tab="nasabah-riwayat" onclick="switchNasabahTab('riwayat')">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat
+                </button>
+                <button class="tab-btn" data-tab="nasabah-layanan" onclick="switchNasabahTab('layanan')">
+                    <i class="fa-solid fa-grid-2"></i> Layanan
+                </button>
+                <button class="tab-btn" data-tab="nasabah-profil" onclick="switchNasabahTab('profil')">
+                    <i class="fa-solid fa-user"></i> Profil
+                </button>
+            </div>
+
+            <!-- Tab: Beranda -->
+            <div id="nasabah-beranda" class="tab-content active">
+                <!-- Layanan Grid -->
+                <section>
+                    <div class="section-header">
+                        <h3>Layanan</h3>
+                    </div>
+                    <div class="services-grid">
+                        <div class="service-card" onclick="nasabahService('nabung')">
+                            <i class="fa-solid fa-box-archive"></i>
+                            <span>Nabung Sampah</span>
+                        </div>
+                        <div class="service-card" onclick="nasabahService('jemput')">
+                            <i class="fa-solid fa-truck-pickup"></i>
+                            <span>Jemput Sampah</span>
+                        </div>
+                        <div class="service-card" onclick="nasabahService('lokasi')">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>Lokasi BSU</span>
+                        </div>
+                        <div class="service-card" onclick="nasabahService('harga')">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Info Harga</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab: Riwayat Transaksi -->
+            <div id="nasabah-riwayat" class="tab-content">
+                <div class="section-header">
+                    <h3>📋 Riwayat Transaksi</h3>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <select id="filterRiwayat" class="form-control" style="width:100px;font-size:9px;padding:4px 6px;" onchange="filterRiwayatTransaksi()">
+                            <option value="all">Semua</option>
+                            <option value="diverifikasi">Diverifikasi</option>
+                            <option value="menunggu">Menunggu</option>
+                            <option value="ditolak">Ditolak</option>
+                        </select>
+                        <button class="btn-excel btn-sm" onclick="exportRiwayatNasabah()">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="nasabahRiwayatList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>Belum ada transaksi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Layanan -->
+            <div id="nasabah-layanan" class="tab-content">
+                <div class="section-header">
+                    <h3>Layanan</h3>
+                </div>
+                <div class="services-grid">
+                    <div class="service-card" onclick="nasabahService('nabung')">
+                        <i class="fa-solid fa-box-archive"></i>
+                        <span>Nabung Sampah</span>
+                        <small style="font-size:8px;color:#94a3b8;">Bawa ke BSU</small>
+                    </div>
+                    <div class="service-card" onclick="nasabahService('jemput')">
+                        <i class="fa-solid fa-truck-pickup"></i>
+                        <span>Jemput Sampah</span>
+                        <small style="font-size:8px;color:#94a3b8;">Request jemput</small>
+                    </div>
+                    <div class="service-card" onclick="nasabahService('lokasi')">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>Lokasi BSU</span>
+                        <small style="font-size:8px;color:#94a3b8;">Lihat peta</small>
+                    </div>
+                    <div class="service-card" onclick="nasabahService('harga')">
+                        <i class="fa-solid fa-tags"></i>
+                        <span>Info Harga</span>
+                        <small style="font-size:8px;color:#94a3b8;">Daftar harga</small>
+                    </div>
+                    <div class="service-card" onclick="nasabahService('riwayat')">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Riwayat</span>
+                        <small style="font-size:8px;color:#94a3b8;">Lihat transaksi</small>
+                    </div>
+                    <div class="service-card" onclick="nasabahService('profil')">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Profil</span>
+                        <small style="font-size:8px;color:#94a3b8;">Data diri</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Profil -->
+            <div id="nasabah-profil" class="tab-content">
+                <div class="section-header">
+                    <h3>👤 Profil Nasabah</h3>
+                    <button class="btn-excel btn-sm" onclick="exportRiwayatNasabah()">
+                        <i class="fa-solid fa-file-excel"></i> Export
+                    </button>
+                </div>
+                <div class="profile-card" style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                        <div style="width:56px;height:56px;border-radius:50%;background:#0d9488;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;">
+                            <span id="profilAvatar">?</span>
+                        </div>
+                        <div>
+                            <div style="font-size:16px;font-weight:700;" id="profilNama">-</div>
+                            <div style="font-size:11px;color:#64748b;" id="profilBSU">-</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+                        <div><strong>RW/RT</strong></div>
+                        <div id="profilRWRT">-</div>
+                        <div><strong>Alamat</strong></div>
+                        <div id="profilAlamat">-</div>
+                        <div><strong>No. HP</strong></div>
+                        <div id="profilNoHP">-</div>
+                        <div><strong>Total Setoran</strong></div>
+                        <div id="profilTotalSetoran">-</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchNasabahTab('beranda')">
+                <i class="fa-solid fa-house"></i>
+                <span>Beranda</span>
+            </div>
+            <div class="nav-item" onclick="switchNasabahTab('riwayat')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Riwayat</span>
+            </div>
+            <div class="nav-item" onclick="nasabahService('nabung')">
+                <i class="fa-solid fa-recycle"></i>
+                <span>Nabung</span>
+            </div>
+            <div class="nav-item" onclick="switchNasabahTab('layanan')">
+                <i class="fa-solid fa-grid-2"></i>
+                <span>Layanan</span>
+            </div>
+            <div class="nav-item" onclick="switchNasabahTab('profil')">
+                <i class="fa-solid fa-user"></i>
+                <span>Profil</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="data-bsu.js"></script>
+    <script src="data-harga.js"></script>
+    <script src="data-sampah-list.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="laporan.js"></script>
+    <script src="login.js"></script>
+    <script src="dashboard-nasabah.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSession();
+            renderNasabah();
+        });
+
+        // Switch tab nasabah
+        function switchNasabahTab(tab) {
+            var buttons = document.querySelectorAll('.nasabah-dashboard .tab-btn');
+            buttons.forEach(function(btn) { btn.classList.remove('active'); });
+            var activeBtn = document.querySelector('.tab-btn[data-tab="nasabah-' + tab + '"]');
+            if (activeBtn) activeBtn.classList.add('active');
+
+            var navItems = document.querySelectorAll('.nasabah-dashboard .bottom-nav .nav-item');
+            navItems.forEach(function(item) { item.classList.remove('active'); });
+            var navMap = { 'beranda': 0, 'riwayat': 1, 'layanan': 3, 'profil': 4 };
+            var index = navMap[tab] || 0;
+            if (navItems[index]) navItems[index].classList.add('active');
+
+            var contents = document.querySelectorAll('.nasabah-dashboard .tab-content');
+            contents.forEach(function(content) { content.classList.remove('active'); });
+            var activeContent = document.getElementById('nasabah-' + tab);
+            if (activeContent) activeContent.classList.add('active');
+
+            if (tab === 'riwayat') renderRiwayatTransaksi();
+            if (tab === 'profil') renderProfilNasabah();
+        }
+
+        window.switchNasabahTab = switchNasabahTab;
+    </script>
+
+</body>
+</html>
