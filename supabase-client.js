@@ -3,19 +3,19 @@
 // KONFIGURASI SUPABASE - LENGKAP
 // =============================================
 
+
+
+// supabase-client.js
 // =============================================
-// ⚠️ GANTI DENGAN CREDENTIALS SUPABASE ANDA ⚠️
+// KONFIGURASI SUPABASE
 // =============================================
 
-const SUPABASE_URL = 'https://your-project-id.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+
+const SUPABASE_URL = 'https://hqhzglfmalajunclaulr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxaHpnbGZtYWxhanVuY2xhdWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMTcxODgsImV4cCI6MjEwMjc5MzE4OH0.YP2HC0GrcKlKgZ72-iUJZbQMQSJhsMOPmOfVzZeU940';
 
 // Create Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// =============================================
-// FUNGSI DATABASE
-// =============================================
 
 // ---- TABEL: bsu ----
 async function getBSU() {
@@ -32,6 +32,52 @@ async function getBSU() {
     }
 }
 
+// ✅ TAMBAHKAN FUNGSI INI (MISSING)
+async function createBSU(bsu) {
+    try {
+        const { data, error } = await supabase
+            .from('bsu')
+            .insert([bsu])
+            .select();
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (e) {
+        console.error('❌ Error createBSU:', e.message);
+        throw e;
+    }
+}
+
+// ✅ TAMBAHKAN FUNGSI INI (MISSING)
+async function updateBSU(id, data) {
+    try {
+        const { data: result, error } = await supabase
+            .from('bsu')
+            .update(data)
+            .eq('id', id)
+            .select();
+        if (error) throw error;
+        return result ? result[0] : null;
+    } catch (e) {
+        console.error('❌ Error updateBSU:', e.message);
+        throw e;
+    }
+}
+
+// ✅ TAMBAHKAN FUNGSI INI (MISSING)
+async function deleteBSU(id) {
+    try {
+        const { error } = await supabase
+            .from('bsu')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        return true;
+    } catch (e) {
+        console.error('❌ Error deleteBSU:', e.message);
+        throw e;
+    }
+}
+
 async function getBSUById(id) {
     try {
         const { data, error } = await supabase
@@ -42,7 +88,6 @@ async function getBSUById(id) {
         if (error) throw error;
         return data;
     } catch (e) {
-        // Fallback ke data lokal
         var bsuList = window.dataBSU || [];
         for (var i = 0; i < bsuList.length; i++) {
             if (bsuList[i].id === id) return bsuList[i];
@@ -61,7 +106,6 @@ async function getBSUByUsername(username) {
         if (error) throw error;
         return data;
     } catch (e) {
-        // Fallback ke data lokal
         var bsuList = window.dataBSU || [];
         for (var i = 0; i < bsuList.length; i++) {
             if (bsuList[i].username === username) return bsuList[i];
@@ -95,7 +139,6 @@ async function getNasabahById(id) {
         if (error) throw error;
         return data;
     } catch (e) {
-        // Fallback ke data lokal
         var nasabahList = window.daftarNasabah || [];
         for (var i = 0; i < nasabahList.length; i++) {
             if (nasabahList[i].id === id) return nasabahList[i];
@@ -114,7 +157,6 @@ async function getNasabahByBSU(bsuId) {
         if (error) throw error;
         return data || [];
     } catch (e) {
-        // Fallback ke data lokal
         var result = [];
         var nasabahList = window.daftarNasabah || [];
         for (var i = 0; i < nasabahList.length; i++) {
@@ -136,7 +178,6 @@ async function getNasabahByUsername(username) {
         if (error) throw error;
         return data;
     } catch (e) {
-        // Fallback ke data lokal
         var nasabahList = window.daftarNasabah || [];
         for (var i = 0; i < nasabahList.length; i++) {
             if (nasabahList[i].username === username) return nasabahList[i];
@@ -213,7 +254,6 @@ async function getTransaksiByStatus(status) {
         if (error) throw error;
         return data || [];
     } catch (e) {
-        // Fallback ke data lokal
         var data = window.daftarSampah || [];
         return data.filter(function(item) { return item.status === status; });
     }
@@ -229,7 +269,6 @@ async function getTransaksiByBSU(bsuId) {
         if (error) throw error;
         return data || [];
     } catch (e) {
-        // Fallback ke data lokal
         var data = window.daftarSampah || [];
         return data.filter(function(item) { 
             return item.bsu_id === bsuId || item.bsuId === bsuId; 
@@ -247,7 +286,6 @@ async function getTransaksiByNasabah(nasabahId) {
         if (error) throw error;
         return data || [];
     } catch (e) {
-        // Fallback ke data lokal
         var data = window.daftarSampah || [];
         return data.filter(function(item) { 
             return item.nasabah_id === nasabahId || item.nasabahId === nasabahId; 
@@ -323,7 +361,6 @@ async function getHargaByNama(nama) {
         if (error) throw error;
         return data;
     } catch (e) {
-        // Fallback ke data lokal
         if (window.hargaSampahDetail && window.hargaSampahDetail[nama]) {
             return { nama: nama, harga_per_kg: window.hargaSampahDetail[nama] };
         }
@@ -380,7 +417,6 @@ async function getFotoUrl(path) {
 // ---- SEED DATA ----
 async function seedInitialData() {
     try {
-        // Cek apakah data BSU sudah ada
         const { count, error } = await supabase
             .from('bsu')
             .select('*', { count: 'exact', head: true });
@@ -397,7 +433,6 @@ async function seedInitialData() {
 
         console.log('📦 Seeding data awal...');
 
-        // Insert BSU dari data-bsu.js
         const bsuList = window.dataBSU || [];
         for (const bsu of bsuList) {
             try {
@@ -415,7 +450,6 @@ async function seedInitialData() {
             }
         }
 
-        // Insert Admin
         try {
             await supabase
                 .from('admin')
@@ -436,12 +470,75 @@ async function seedInitialData() {
     }
 }
 
+// ---- SEED HARGA SAMPAH ----
+async function seedHargaSampahToSupabase() {
+    try {
+        const { data: existing, error: checkError } = await supabase
+            .from('harga_sampah')
+            .select('*', { count: 'exact', head: true });
+        
+        if (checkError) {
+            console.warn('⚠️ Gagal cek data harga:', checkError.message);
+            return;
+        }
+        
+        if (existing && existing.length > 0) {
+            console.log('✅ Data harga sudah ada di Supabase, skip seed');
+            return;
+        }
+
+        console.log('📦 Seeding harga sampah ke Supabase...');
+        
+        var preset = window.presetSampah || { plastik: [], logam: [], kertas: [] };
+        var allSampah = [];
+        
+        for (var jenis in preset) {
+            var list = preset[jenis] || [];
+            for (var i = 0; i < list.length; i++) {
+                var nama = list[i];
+                var harga = 2000;
+                if (window.hargaSampahDetail && window.hargaSampahDetail[nama]) {
+                    harga = window.hargaSampahDetail[nama];
+                }
+                allSampah.push({
+                    nama: nama,
+                    jenis: jenis,
+                    harga_per_kg: harga
+                });
+            }
+        }
+        
+        var batchSize = 50;
+        for (var i = 0; i < allSampah.length; i += batchSize) {
+            var batch = allSampah.slice(i, i + batchSize);
+            try {
+                const { data, error } = await supabase
+                    .from('harga_sampah')
+                    .insert(batch)
+                    .select();
+                if (error) throw error;
+                console.log('✅ Inserted batch', i/batchSize + 1, ':', batch.length, 'items');
+            } catch (e) {
+                console.warn('⚠️ Gagal insert batch:', e.message);
+            }
+        }
+        
+        console.log('✅ Seed harga sampah completed! Total:', allSampah.length);
+        
+    } catch (error) {
+        console.error('❌ Error seed harga:', error.message);
+    }
+}
+
 // ---- EXPORT ----
 window.db = {
     supabase,
     getBSU,
     getBSUById,
     getBSUByUsername,
+    createBSU,          // ✅ SEKARANG TERSEDIA
+    updateBSU,          // ✅ SEKARANG TERSEDIA
+    deleteBSU,          // ✅ SEKARANG TERSEDIA
     getNasabah,
     getNasabahById,
     getNasabahByBSU,
@@ -461,7 +558,8 @@ window.db = {
     updateHargaSampah,
     uploadFoto,
     getFotoUrl,
-    seedInitialData
+    seedInitialData,
+    seedHargaSampahToSupabase
 };
 
 console.log('✅ Supabase Client loaded');
