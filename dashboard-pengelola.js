@@ -687,3 +687,51 @@ window.updateBottomNav = updateBottomNav;
 console.log('✅ Dashboard Pengelola loaded');
 console.log('🏢 BSU:', pengelolaAktif.namaBSU);
 console.log('👤 Ketua:', pengelolaAktif.ketua);
+
+// =============================================
+// REAL-TIME AUTO REFRESH FOR PENGELOLA
+// =============================================
+
+var pengelolaRealtimeChannels = [];
+var pengelolaRealtimeSetup = false;
+
+function setupPengelolaRealtime() {
+    if (pengelolaRealtimeSetup) return;
+    
+    if (window.removeAllChannels) {
+        window.removeAllChannels(pengelolaRealtimeChannels);
+    }
+    pengelolaRealtimeChannels = [];
+    
+    function refreshPengelola() {
+        console.log('🔄 Auto refresh pengelola dashboard...');
+        if (window.syncAllData) {
+            window.syncAllData().then(() => {
+                renderPengelola();
+            });
+        } else {
+            renderPengelola();
+        }
+    }
+    
+    if (window.setupAllRealtime) {
+        window.setupAllRealtime({
+            onTransaksiChange: refreshPengelola,
+            onNasabahChange: refreshPengelola,
+            onHargaChange: refreshPengelola
+        }).then(channels => {
+            pengelolaRealtimeChannels = channels;
+            pengelolaRealtimeSetup = true;
+            console.log('✅ Pengelola real-time active!');
+        });
+    }
+}
+
+// Update renderPengelola - tambahkan di akhir
+function renderPengelola() {
+    // ... kode render yang sudah ada ...
+    
+    if (!pengelolaRealtimeSetup) {
+        setupPengelolaRealtime();
+    }
+}

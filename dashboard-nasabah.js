@@ -575,3 +575,52 @@ window.showDetailTransaksi = showDetailTransaksi;
 window.cetakBuktiTransaksi = cetakBuktiTransaksi;
 
 console.log('✅ Dashboard Nasabah loaded ');
+
+// =============================================
+// REAL-TIME AUTO REFRESH FOR NASABAH
+// =============================================
+
+var nasabahRealtimeChannels = [];
+var nasabahRealtimeSetup = false;
+
+function setupNasabahRealtime() {
+    if (nasabahRealtimeSetup) return;
+    
+    if (window.removeAllChannels) {
+        window.removeAllChannels(nasabahRealtimeChannels);
+    }
+    nasabahRealtimeChannels = [];
+    
+    function refreshNasabah() {
+        console.log('🔄 Auto refresh nasabah dashboard...');
+        if (nasabahAktif) {
+            if (window.syncAllData) {
+                window.syncAllData().then(() => {
+                    renderNasabah();
+                });
+            } else {
+                renderNasabah();
+            }
+        }
+    }
+    
+    if (window.setupAllRealtime) {
+        window.setupAllRealtime({
+            onTransaksiChange: refreshNasabah,
+            onNasabahChange: refreshNasabah
+        }).then(channels => {
+            nasabahRealtimeChannels = channels;
+            nasabahRealtimeSetup = true;
+            console.log('✅ Nasabah real-time active!');
+        });
+    }
+}
+
+// Update renderNasabah - tambahkan di akhir
+function renderNasabah() {
+    // ... kode render yang sudah ada ...
+    
+    if (!nasabahRealtimeSetup) {
+        setupNasabahRealtime();
+    }
+}

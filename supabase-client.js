@@ -564,3 +564,163 @@ window.db = {
 
 console.log('✅ Supabase Client loaded');
 console.log('🔗 Connected to:', SUPABASE_URL);
+
+// =============================================
+// REAL-TIME SUBSCRIPTIONS
+// =============================================
+
+/**
+ * Subscribe ke perubahan tabel transaksi
+ */
+async function subscribeToTransaksi(callback) {
+    const channel = supabase
+        .channel('transaksi-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*', // INSERT, UPDATE, DELETE
+                schema: 'public',
+                table: 'transaksi'
+            },
+            (payload) => {
+                console.log('🔄 Transaksi berubah:', payload.eventType, payload.new);
+                if (callback) callback(payload);
+                if (window._onTransaksiChange) {
+                    window._onTransaksiChange(payload);
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Real-time transaksi status:', status);
+        });
+    
+    return channel;
+}
+
+/**
+ * Subscribe ke perubahan tabel nasabah
+ */
+async function subscribeToNasabah(callback) {
+    const channel = supabase
+        .channel('nasabah-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'nasabah'
+            },
+            (payload) => {
+                console.log('🔄 Nasabah berubah:', payload.eventType, payload.new);
+                if (callback) callback(payload);
+                if (window._onNasabahChange) {
+                    window._onNasabahChange(payload);
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Real-time nasabah status:', status);
+        });
+    
+    return channel;
+}
+
+/**
+ * Subscribe ke perubahan tabel harga_sampah
+ */
+async function subscribeToHargaSampah(callback) {
+    const channel = supabase
+        .channel('harga-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'harga_sampah'
+            },
+            (payload) => {
+                console.log('🔄 Harga sampah berubah:', payload.eventType, payload.new);
+                if (callback) callback(payload);
+                if (window._onHargaChange) {
+                    window._onHargaChange(payload);
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Real-time harga sampah status:', status);
+        });
+    
+    return channel;
+}
+
+/**
+ * Subscribe ke perubahan tabel bsu
+ */
+async function subscribeToBSU(callback) {
+    const channel = supabase
+        .channel('bsu-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'bsu'
+            },
+            (payload) => {
+                console.log('🔄 BSU berubah:', payload.eventType, payload.new);
+                if (callback) callback(payload);
+                if (window._onBSUChange) {
+                    window._onBSUChange(payload);
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Real-time bsu status:', status);
+        });
+    
+    return channel;
+}
+
+/**
+ * Setup semua real-time subscriptions sekaligus
+ */
+async function setupAllRealtime(callbacks) {
+    const channels = [];
+    
+    const transChannel = await subscribeToTransaksi(callbacks?.onTransaksiChange);
+    channels.push(transChannel);
+    
+    const nasabahChannel = await subscribeToNasabah(callbacks?.onNasabahChange);
+    channels.push(nasabahChannel);
+    
+    const hargaChannel = await subscribeToHargaSampah(callbacks?.onHargaChange);
+    channels.push(hargaChannel);
+    
+    const bsuChannel = await subscribeToBSU(callbacks?.onBSUChange);
+    channels.push(bsuChannel);
+    
+    console.log('📡 All real-time subscriptions active!');
+    return channels;
+}
+
+/**
+ * Hapus semua channel
+ */
+async function removeAllChannels(channels) {
+    if (!channels) return;
+    for (const channel of channels) {
+        await supabase.removeChannel(channel);
+    }
+    console.log('📡 All channels removed');
+}
+
+// ---- EXPORT REAL-TIME FUNCTIONS ----
+window.subscribeToTransaksi = subscribeToTransaksi;
+window.subscribeToNasabah = subscribeToNasabah;
+window.subscribeToHargaSampah = subscribeToHargaSampah;
+window.subscribeToBSU = subscribeToBSU;
+window.setupAllRealtime = setupAllRealtime;
+window.removeAllChannels = removeAllChannels;
+window.realtimeChannels = [];
+
+console.log('✅ Real-time functions loaded');

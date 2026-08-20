@@ -812,3 +812,53 @@ window.updateFilterLaporan = updateFilterLaporan;
 
 console.log('✅ Dashboard Admin loaded with Charts');
 console.log('👤 Total Nasabah terdaftar:', daftarNasabah.length);
+
+// =============================================
+// REAL-TIME AUTO REFRESH FOR ADMIN
+// =============================================
+
+var adminRealtimeChannels = [];
+var adminRealtimeSetup = false;
+
+function setupAdminRealtime() {
+    if (adminRealtimeSetup) return;
+    
+    if (window.removeAllChannels) {
+        window.removeAllChannels(adminRealtimeChannels);
+    }
+    adminRealtimeChannels = [];
+    
+    function refreshAdmin() {
+        console.log('🔄 Auto refresh admin dashboard...');
+        if (window.syncAllData) {
+            window.syncAllData().then(() => {
+                renderAdmin();
+            });
+        } else {
+            renderAdmin();
+        }
+    }
+    
+    if (window.setupAllRealtime) {
+        window.setupAllRealtime({
+            onTransaksiChange: refreshAdmin,
+            onNasabahChange: refreshAdmin,
+            onHargaChange: refreshAdmin,
+            onBSUChange: refreshAdmin
+        }).then(channels => {
+            adminRealtimeChannels = channels;
+            adminRealtimeSetup = true;
+            console.log('✅ Admin real-time active!');
+        });
+    }
+}
+
+// Update fungsi renderAdmin
+function renderAdmin() {
+    // ... kode render yang sudah ada ...
+    
+    // Tambahkan di akhir
+    if (!adminRealtimeSetup) {
+        setupAdminRealtime();
+    }
+}
