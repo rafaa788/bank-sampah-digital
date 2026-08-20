@@ -461,8 +461,15 @@ function updateHargaSampah(nama, hargaBaru) {
         showToast('Masukkan harga yang valid!', true);
         return;
     }
-    window.hargaSampahDetail[nama] = harga;
-    showToast('Harga ' + nama + ' diupdate menjadi Rp ' + formatRupiah(harga), false);
+    
+    // Update ke Supabase
+    if (window.updateHargaSampahSupabase) {
+        window.updateHargaSampahSupabase(nama, harga);
+    } else {
+        // Fallback lokal
+        window.hargaSampahDetail[nama] = harga;
+        showToast('Harga ' + nama + ' diupdate menjadi Rp ' + formatRupiah(harga), false);
+    }
 }
 
 // =============================================

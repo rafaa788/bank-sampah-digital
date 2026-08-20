@@ -1,8 +1,9 @@
 // data-harga.js
 // =====================================================
-// DATA HARGA SAMPAH - VERSI LENGKAP
+// DATA HARGA SAMPAH - SUPABASE
 // =====================================================
 
+// Data harga lokal (fallback jika Supabase offline)
 var hargaSampahDetail = {
     // ===== PLASTIK =====
     "Pet A - Botol TANPA tutup dan label + Galon Le Mineral": 3500,
@@ -63,18 +64,42 @@ var hargaSampahDetail = {
 };
 
 // =============================================
-// FUNGSI GET HARGA
+// SYNC HARGA DARI SUPABASE
+// =============================================
+
+async function syncHargaSampahFromSupabase() {
+    try {
+        if (window.db && window.db.getHargaSampah) {
+            const data = await window.db.getHargaSampah();
+            if (data && data.length > 0) {
+                // Update hargaSampahDetail dengan data dari Supabase
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    hargaSampahDetail[item.nama] = item.harga_per_kg;
+                }
+                console.log('📥 Synced harga sampah from Supabase:', data.length);
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync harga, pakai data lokal');
+    }
+    return null;
+}
+
+// =============================================
+// FUNGSI GET HARGA - PRIORITAS SUPABASE
 // =============================================
 
 function getHargaByNamaSampah(namaSampah) {
     if (!namaSampah) return 2000;
     
-    // Cek exact match
+    // 1. Cek di hargaSampahDetail (sudah sync dari Supabase)
     if (hargaSampahDetail[namaSampah]) {
         return hargaSampahDetail[namaSampah];
     }
     
-    // Cek partial match
+    // 2. Cek partial match
     var namaLower = namaSampah.toLowerCase();
     for (var key in hargaSampahDetail) {
         if (namaLower.includes(key.toLowerCase()) || key.toLowerCase().includes(namaLower)) {
@@ -82,7 +107,7 @@ function getHargaByNamaSampah(namaSampah) {
         }
     }
     
-    // Default berdasarkan keyword
+    // 3. Default berdasarkan keyword
     var plastikKeywords = ["botol", "plastik", "gelas", "kresek", "sedotan", "tutup", "galon", 
                            "paralon", "ember", "hdpe", "pp", "tetrapak", "slopan", "kaset", 
                            "boncos", "naso", "impact", "nilek", "pp inject"];
@@ -128,11 +153,101 @@ function getKategoriByNamaSampah(namaSampah) {
 }
 
 // =============================================
+// FUNGSI UPDATE HARGA KE SUPABASE
+// =============================================
+
+async function updateHargaSampahSupabase(nama, hargaBaru) {
+    var harga = parseFloat(hargaBaru);
+    if (isNaN(harga) || harga < 0) {
+        showToast('Masukkan harga yang valid!', true);
+        return null;
+    }
+    
+    // Update lokal dulu
+    hargaSampahDetail[nama] = harga;
+    
+    // Update ke Supabase
+    try {
+        if (window.db && window.db.updateHargaSampah) {
+            const result = await window.db.updateHargaSampah(nama, harga);
+            if (result) {
+                console.log('✅ Harga updated di Supabase:', nama, harga);
+                showToast('Harga ' + nama + ' diupdate menjadi Rp ' + formatRupiah(harga), false);
+                return result;
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Gagal update ke Supabase, pakai lokal:', e.message);
+        showToast('Harga ' + nama + ' diupdate (lokal)', false);
+    }
+    
+    return { nama: nama, harga_per_kg: harga };
+}
+
+// =============================================
+// SEED DATA HARGA KE SUPABASE
+// =============================================
+
+async function seedHargaSampahToSupabase() {
+    try {
+        // Cek apakah data harga sudah ada
+        if (window.db && window.db.getHargaSampah) {
+            const existing = await window.db.getHargaSampah();
+            if (existing && existing.length > 0) {
+                console.log('✅ Data harga sudah ada di Supabase, skip seed');
+                return;
+            }
+        }
+        
+        console.log('📦 Seeding harga sampah ke Supabase...');
+        
+        // Ambil semua nama sampah dari presetSampah
+        var allSampah = [];
+        var preset = window.presetSampah || { plastik: [], logam: [], kertas: [] };
+        
+        for (var jenis in preset) {
+            var list = preset[jenis] || [];
+            for (var i = 0; i < list.length; i++) {
+                var nama = list[i];
+                var harga = getHargaByNamaSampah(nama);
+                allSampah.push({
+                    nama: nama,
+                    jenis: jenis,
+                    harga_per_kg: harga
+                });
+            }
+        }
+        
+        // Insert ke Supabase
+        if (window.db && window.db.supabase) {
+            var supabase = window.db.supabase;
+            for (var i = 0; i < allSampah.length; i++) {
+                try {
+                    await supabase
+                        .from('harga_sampah')
+                        .insert([allSampah[i]])
+                        .select();
+                } catch (e) {
+                    console.warn('⚠️ Gagal insert:', allSampah[i].nama, e.message);
+                }
+            }
+            console.log('✅ Seed harga sampah completed! Total:', allSampah.length);
+        }
+        
+    } catch (e) {
+        console.error('❌ Error seed harga:', e.message);
+    }
+}
+
+// =============================================
 // EXPORT KE GLOBAL
 // =============================================
 window.hargaSampahDetail = hargaSampahDetail;
 window.getHargaByNamaSampah = getHargaByNamaSampah;
 window.getKategoriByNamaSampah = getKategoriByNamaSampah;
+window.updateHargaSampahSupabase = updateHargaSampahSupabase;
+window.syncHargaSampahFromSupabase = syncHargaSampahFromSupabase;
+window.seedHargaSampahToSupabase = seedHargaSampahToSupabase;
 
 console.log('✅ Data Harga loaded:', Object.keys(hargaSampahDetail).length, 'items');
-console.log('📋 Rincian: Plastik ' + presetSampah.plastik.length + ' item, Logam ' + presetSampah.logam.length + ' item, Kertas ' + presetSampah.kertas.length + ' item');
+console.log('📋 Rincian: Plastik ' + (window.presetSampah ? window.presetSampah.plastik.length : 0) + ' item, Logam ' + (window.presetSampah ? window.presetSampah.logam.length : 0) + ' item, Kertas ' + (window.presetSampah ? window.presetSampah.kertas.length : 0) + ' item');

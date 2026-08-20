@@ -1,6 +1,6 @@
 // data-sampah-list.js
 // =====================================================
-// DAFTAR NAMA SAMPAH PER KATEGORI - VERSI LENGKAP
+// DAFTAR NAMA SAMPAH PER KATEGORI - SUPABASE
 // =====================================================
 
 var presetSampah = {
@@ -63,8 +63,61 @@ var presetSampah = {
     ]
 };
 
+// =============================================
+// SYNC DAFTAR SAMPAH DARI SUPABASE
+// =============================================
+
+async function syncSampahListFromSupabase() {
+    try {
+        if (window.db && window.db.getHargaSampah) {
+            const data = await window.db.getHargaSampah();
+            if (data && data.length > 0) {
+                // Kelompokkan berdasarkan jenis
+                var newPreset = { plastik: [], logam: [], kertas: [] };
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var jenis = item.jenis || 'plastik';
+                    if (newPreset[jenis]) {
+                        newPreset[jenis].push(item.nama);
+                    }
+                }
+                
+                // Update presetSampah jika ada data dari Supabase
+                if (newPreset.plastik.length > 0 || newPreset.logam.length > 0 || newPreset.kertas.length > 0) {
+                    window.presetSampah = newPreset;
+                    console.log('📥 Synced sampah list from Supabase:', 
+                        newPreset.plastik.length + ' plastik, ' + 
+                        newPreset.logam.length + ' logam, ' + 
+                        newPreset.kertas.length + ' kertas'
+                    );
+                }
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync sampah list, pakai data lokal');
+    }
+    return null;
+}
+
+// =============================================
+// GET SAMPAH LIST BY JENIS
+// =============================================
+
+function getSampahListByJenis(jenis) {
+    var preset = window.presetSampah || presetSampah;
+    return preset[jenis] || [];
+}
+
+// =============================================
+// EXPORT KE GLOBAL
+// =============================================
 window.presetSampah = presetSampah;
+window.getSampahListByJenis = getSampahListByJenis;
+window.syncSampahListFromSupabase = syncSampahListFromSupabase;
+
 console.log('✅ Data Sampah List loaded:', 
     presetSampah.plastik.length + ' Plastik, ' + 
     presetSampah.logam.length + ' Logam, ' + 
-    presetSampah.kertas.length + ' Kertas');
+    presetSampah.kertas.length + ' Kertas'
+);

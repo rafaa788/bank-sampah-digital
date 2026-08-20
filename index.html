@@ -352,11 +352,12 @@
 
 
 <!-- URUTAN SCRIPT -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js"></script>
 <script src="data-bsu.js"></script>
-<script src="data-harga.js"></script>
-<script src="data-sampah-list.js"></script>
+<script src="data-sampah-list.js"></script>    
+<script src="data-harga.js"></script>         
 <script src="data.js"></script>
 <script src="main.js"></script>
 <script src="laporan.js"></script>
@@ -370,24 +371,35 @@
         console.log('🔄 Syncing data from Supabase...');
         
         try {
-            // Sync nasabah
+            // 1. Sync nasabah
             if (window.syncNasabahFromSupabase) {
                 await window.syncNasabahFromSupabase();
             }
             
-            // Sync transaksi
+            // 2. Sync transaksi
             if (window.syncTransaksiFromSupabase) {
                 await window.syncTransaksiFromSupabase();
+            }
+            
+            // 3. SYNC HARGA SAMPAH (TAMBAHKAN INI)
+            if (window.syncHargaSampahFromSupabase) {
+                await window.syncHargaSampahFromSupabase();
+            }
+            
+            // 4. SYNC DAFTAR SAMPAH (TAMBAHKAN INI)
+            if (window.syncSampahListFromSupabase) {
+                await window.syncSampahListFromSupabase();
             }
             
             console.log('✅ Data synced successfully');
             console.log('👤 Total Nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
             console.log('📄 Total Transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
+            console.log('💰 Total Harga Sampah:', Object.keys(window.hargaSampahDetail || {}).length);
         } catch (e) {
             console.warn('⚠️ Gagal sync data:', e.message);
         }
         
-        // Seed data awal jika belum ada (tapi hanya jika ada koneksi Supabase)
+        // Seed data awal jika belum ada
         if (window.db && window.db.seedInitialData) {
             try {
                 await window.db.seedInitialData();
@@ -396,7 +408,17 @@
             }
         }
         
+        // Seed harga sampah ke Supabase (jika belum ada)
+        if (window.seedHargaSampahToSupabase) {
+            try {
+                await window.seedHargaSampahToSupabase();
+            } catch (e) {
+                console.log('Seed harga skipped or failed');
+            }
+        }
+        
         // Debug helper
         console.log('💡 Ketik cekDataNasabah() di console untuk melihat data nasabah');
+        console.log('💡 Ketik syncHargaSampahFromSupabase() untuk sync harga');
     });
 </script>
