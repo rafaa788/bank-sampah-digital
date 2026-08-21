@@ -12,8 +12,7 @@
 
 
 const SUPABASE_URL = 'https://hqhzglfmalajunclaulr.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxaHpnbGZtYWxhanVuY2xhdWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMTcxODgsImV4cCI6MjEwMjc5MzE4OH0.YP2HC0GrcKlKgZ72-iUJZbQMQSJhsMOPmOfVzZeU940';
-
+const SUPABASE_ANON_KEY = 'sb_publishable_z8PfmkvjRziYDYZ9wWwMIA_CcVWJ4bM';
 // Create Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
