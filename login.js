@@ -38,10 +38,10 @@ async function handleLogin() {
         for (var i = 0; i < adminAccounts.length; i++) {
             if (adminAccounts[i].username.toLowerCase() === username.toLowerCase() && 
                 adminAccounts[i].password === password) {
-                console.log('✅ Login sebagai Admin');
+                console.log(' Login sebagai Admin');
                 sessionStorage.setItem('role', 'admin');
                 sessionStorage.setItem('adminName', adminAccounts[i].name);
-                showToast('✅ Selamat datang Admin!', false);
+                showToast(' Selamat datang Admin!', false);
                 showLoading(false);
                 setTimeout(function() {
                     window.location.href = 'admin.html';
@@ -53,14 +53,14 @@ async function handleLogin() {
         // 2. CEK PENGELOLA BSU
         var bsu = await validateBSULoginSupabase(username, password);
         if (bsu) {
-            console.log('✅ Login sebagai Pengelola:', bsu.nama);
+            console.log(' Login sebagai Pengelola:', bsu.nama);
             sessionStorage.setItem('role', 'pengelola');
             sessionStorage.setItem('bsuId', bsu.id);
             sessionStorage.setItem('bsuNama', bsu.nama);
             sessionStorage.setItem('bsuRw', bsu.rw);
             sessionStorage.setItem('bsuRt', bsu.rt);
             sessionStorage.setItem('bsuKetua', bsu.ketua);
-            showToast('✅ Selamat datang Pengelola ' + bsu.nama + '!', false);
+            showToast(' Selamat datang Pengelola ' + bsu.nama + '!', false);
             showLoading(false);
             setTimeout(function() {
                 window.location.href = 'pengelola.html';
@@ -71,12 +71,12 @@ async function handleLogin() {
         // 3. CEK NASABAH
         var nasabah = await validateNasabahLoginSupabase(username, password);
         if (nasabah) {
-            console.log('✅ Login sebagai Nasabah:', nasabah.nama);
+            console.log(' Login sebagai Nasabah:', nasabah.nama);
             sessionStorage.setItem('role', 'nasabah');
             sessionStorage.setItem('nasabahId', nasabah.id);
             sessionStorage.setItem('nasabahNama', nasabah.nama);
             sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id);
-            showToast('✅ Selamat datang ' + nasabah.nama + '!', false);
+            showToast(' Selamat datang ' + nasabah.nama + '!', false);
             showLoading(false);
             setTimeout(function() {
                 window.location.href = 'nasabah.html';
@@ -315,10 +315,109 @@ function loadBSUOptionsLocal(select) {
 // PROSES DAFTAR NASABAH
 // =============================================
 
-// login.js - Bagian daftarNasabah yang diperbaiki
+// =============================================
+// PROSES DAFTAR NASABAH (PERBAIKAN)
+// =============================================
 
 async function daftarNasabah() {
-    // ... validasi sama seperti sebelumnya ...
+    console.log('📝 Proses registrasi nasabah...');
+    
+    var errorEl = document.getElementById('daftarError');
+    var successEl = document.getElementById('daftarSuccess');
+    
+    if (!errorEl) {
+        console.error('❌ Element daftarError tidak ditemukan!');
+        showToast('⚠️ Error sistem, silakan refresh halaman!', true);
+        return;
+    }
+    
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+    if (successEl) {
+        successEl.style.display = 'none';
+        successEl.textContent = '';
+    }
+    
+    // ===== AMBIL NILAI FORM =====
+    var namaField = document.getElementById('daftarNama');
+    var usernameField = document.getElementById('daftarUsername');
+    var passwordField = document.getElementById('daftarPassword');
+    var passwordConfirmField = document.getElementById('daftarPasswordConfirm');
+    var bsuSelect = document.getElementById('daftarBSU');
+    var rwField = document.getElementById('daftarRW');
+    var rtField = document.getElementById('daftarRT');
+    var alamatField = document.getElementById('daftarAlamat');
+    var noHpField = document.getElementById('daftarNoHP');
+    
+    // ===== VALIDASI ELEMENT FORM =====
+    if (!namaField || !usernameField || !passwordField || !passwordConfirmField || !bsuSelect) {
+        showToast('⚠️ Error form, silakan refresh halaman!', true);
+        return;
+    }
+    
+    // ===== AMBIL VALUE =====
+    var namaValue = namaField.value.trim();
+    var usernameValue = usernameField.value.trim();
+    var passwordValue = passwordField.value;
+    var passwordConfirmValue = passwordConfirmField.value;
+    var bsuId = bsuSelect.value;
+    var rwValue = rwField ? rwField.value.trim() : '';
+    var rtValue = rtField ? rtField.value.trim() : '';
+    var alamatValue = alamatField ? alamatField.value.trim() : '';
+    var noHpValue = noHpField ? noHpField.value.trim() : '';
+    
+    console.log('📋 Data form:', { 
+        nama: namaValue, 
+        username: usernameValue, 
+        bsuId: bsuId,
+        rw: rwValue,
+        rt: rtValue
+    });
+    
+    // ===== VALIDASI =====
+    var errors = [];
+    
+    if (!namaValue) errors.push('Nama lengkap wajib diisi');
+    else if (namaValue.length < 3) errors.push('Nama minimal 3 karakter');
+    
+    if (!usernameValue) errors.push('Username wajib diisi');
+    else if (usernameValue.length < 3) errors.push('Username minimal 3 karakter');
+    else if (!/^[a-zA-Z0-9_]+$/.test(usernameValue)) errors.push('Username hanya boleh huruf, angka, dan underscore');
+    
+    if (!passwordValue) errors.push('Password wajib diisi');
+    else if (passwordValue.length < 4) errors.push('Password minimal 4 karakter');
+    
+    if (passwordValue !== passwordConfirmValue) errors.push('Password tidak cocok');
+    
+    if (!bsuId) errors.push('Pilih BSU terlebih dahulu');
+    
+    // Cek username duplikat
+    if (usernameValue) {
+        try {
+            if (window.db && window.db.getNasabahByUsername) {
+                const existing = await window.db.getNasabahByUsername(usernameValue);
+                if (existing) {
+                    errors.push('Username "' + usernameValue + '" sudah digunakan');
+                }
+            }
+        } catch (e) {
+            // Cek lokal
+            var nasabahList = window.daftarNasabah || [];
+            for (var i = 0; i < nasabahList.length; i++) {
+                if (nasabahList[i].username && nasabahList[i].username.toLowerCase() === usernameValue.toLowerCase()) {
+                    errors.push('Username "' + usernameValue + '" sudah digunakan');
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (errors.length > 0) {
+        errorEl.textContent = '⚠️ ' + errors.join(' | ');
+        errorEl.style.display = 'block';
+        showToast('⚠️ ' + errors[0], true);
+        return;
+    }
     
     // ===== SIMPAN DATA =====
     showLoading(true);
@@ -352,7 +451,6 @@ async function daftarNasabah() {
             // Reset form dan tutup modal
             setTimeout(function() {
                 tutupModalDaftar();
-                // Kosongkan form login, biarkan user isi sendiri
                 document.getElementById('loginUsername').value = '';
                 document.getElementById('loginPassword').value = '';
                 showToast('✅ Silakan login dengan akun baru Anda', false);
