@@ -316,7 +316,7 @@ function loadBSUOptionsLocal(select) {
 // =============================================
 
 // =============================================
-// PROSES DAFTAR NASABAH (LENGKAP & BENAR)
+// PROSES DAFTAR NASABAH (PERBAIKAN VALIDASI)
 // =============================================
 
 async function daftarNasabah() {
@@ -338,7 +338,7 @@ async function daftarNasabah() {
         successEl.textContent = '';
     }
     
-    // ===== AMBIL VALUE DARI FORM =====
+    // ===== AMBIL VALUE =====
     var namaField = document.getElementById('daftarNama');
     var usernameField = document.getElementById('daftarUsername');
     var passwordField = document.getElementById('daftarPassword');
@@ -349,13 +349,13 @@ async function daftarNasabah() {
     var alamatField = document.getElementById('daftarAlamat');
     var noHpField = document.getElementById('daftarNoHP');
     
-    // ===== VALIDASI ELEMENT FORM =====
+    // ===== VALIDASI ELEMENT =====
     if (!namaField || !usernameField || !passwordField || !passwordConfirmField || !bsuSelect) {
         showToast('⚠️ Error form, silakan refresh halaman!', true);
         return;
     }
     
-    // ===== DEFINISIKAN VARIABLE =====
+    // ===== AMBIL VALUE =====
     var namaValue = namaField.value.trim();
     var usernameValue = usernameField.value.trim();
     var passwordValue = passwordField.value;
@@ -377,22 +377,41 @@ async function daftarNasabah() {
     // ===== VALIDASI =====
     var errors = [];
     
-    if (!namaValue) errors.push('Nama lengkap wajib diisi');
-    else if (namaValue.length < 3) errors.push('Nama minimal 3 karakter');
+    // Nama
+    if (!namaValue) {
+        errors.push('Nama lengkap wajib diisi');
+    } else if (namaValue.length < 3) {
+        errors.push('Nama minimal 3 karakter');
+    }
     
-    if (!usernameValue) errors.push('Username wajib diisi');
-    else if (usernameValue.length < 3) errors.push('Username minimal 3 karakter');
-    else if (!/^[a-zA-Z0-9_]+$/.test(usernameValue)) errors.push('Username hanya boleh huruf, angka, dan underscore');
+    // Username
+    if (!usernameValue) {
+        errors.push('Username wajib diisi');
+    } else if (usernameValue.length < 3) {
+        errors.push('Username minimal 3 karakter');
+    } else if (!/^[a-zA-Z0-9_]+$/.test(usernameValue)) {
+        errors.push('Username hanya boleh huruf, angka, dan underscore');
+    }
     
-    if (!passwordValue) errors.push('Password wajib diisi');
-    else if (passwordValue.length < 4) errors.push('Password minimal 4 karakter');
+    // Password
+    if (!passwordValue) {
+        errors.push('Password wajib diisi');
+    } else if (passwordValue.length < 4) {
+        errors.push('Password minimal 4 karakter');
+    }
     
-    if (passwordValue !== passwordConfirmValue) errors.push('Password tidak cocok');
+    // Konfirmasi Password
+    if (passwordValue !== passwordConfirmValue) {
+        errors.push('Password tidak cocok');
+    }
     
-    if (!bsuId) errors.push('Pilih BSU terlebih dahulu');
+    // BSU
+    if (!bsuId) {
+        errors.push('Pilih BSU terlebih dahulu');
+    }
     
     // Cek username duplikat
-    if (usernameValue) {
+    if (usernameValue && usernameValue.length >= 3) {
         try {
             if (window.db && window.db.getNasabahByUsername) {
                 const existing = await window.db.getNasabahByUsername(usernameValue);
@@ -401,6 +420,8 @@ async function daftarNasabah() {
                 }
             }
         } catch (e) {
+            console.log('⚠️ Gagal cek duplikat:', e.message);
+            // Cek lokal
             var nasabahList = window.daftarNasabah || [];
             for (var i = 0; i < nasabahList.length; i++) {
                 if (nasabahList[i].username && nasabahList[i].username.toLowerCase() === usernameValue.toLowerCase()) {
@@ -411,6 +432,7 @@ async function daftarNasabah() {
         }
     }
     
+    // TAMPILKAN ERROR
     if (errors.length > 0) {
         errorEl.textContent = '⚠️ ' + errors.join(' | ');
         errorEl.style.display = 'block';
@@ -421,11 +443,11 @@ async function daftarNasabah() {
     // ===== SIMPAN DATA =====
     showLoading(true);
     
-    var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(0, 6);
+    var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     var newNasabah = {
         id: newId,
         nama: namaValue,
-        username: usernameValue,
+        username: usernameValue.toLowerCase(),
         password: passwordValue,
         bsu_id: bsuId,
         rw: rwValue,
@@ -435,8 +457,9 @@ async function daftarNasabah() {
         created_at: new Date().toISOString()
     };
     
+    console.log('📤 Data akan disimpan:', newNasabah);
+    
     try {
-        // SIMPAN KE SUPABASE
         if (window.db && window.db.createNasabah) {
             const saved = await window.db.createNasabah(newNasabah);
             console.log('✅ Nasabah tersimpan di Supabase:', saved);
@@ -446,14 +469,21 @@ async function daftarNasabah() {
             
             showToast('✅ Akun berhasil dibuat! Silakan login.', false);
             
+            if (successEl) {
+                successEl.style.display = 'block';
+                successEl.textContent = '✅ Akun berhasil dibuat! Silakan login.';
+            }
+            
+            // Reset form
             setTimeout(function() {
                 tutupModalDaftar();
-                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginUsername').value = usernameValue.toLowerCase();
                 document.getElementById('loginPassword').value = '';
-                showToast('✅ Silakan login dengan akun baru Anda', false);
+                showToast('✅ Silakan login dengan username: ' + usernameValue.toLowerCase(), false);
             }, 1500);
             
         } else {
+            // Fallback lokal
             console.warn('⚠️ db.createNasabah tidak tersedia, simpan lokal');
             if (!window.daftarNasabah) window.daftarNasabah = [];
             window.daftarNasabah.push(newNasabah);
