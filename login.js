@@ -316,7 +316,7 @@ function loadBSUOptionsLocal(select) {
 // =============================================
 
 // =============================================
-// PROSES DAFTAR NASABAH (PERBAIKAN)
+// PROSES DAFTAR NASABAH (LENGKAP & BENAR)
 // =============================================
 
 async function daftarNasabah() {
@@ -338,7 +338,7 @@ async function daftarNasabah() {
         successEl.textContent = '';
     }
     
-    // ===== AMBIL NILAI FORM =====
+    // ===== AMBIL VALUE DARI FORM =====
     var namaField = document.getElementById('daftarNama');
     var usernameField = document.getElementById('daftarUsername');
     var passwordField = document.getElementById('daftarPassword');
@@ -355,7 +355,7 @@ async function daftarNasabah() {
         return;
     }
     
-    // ===== AMBIL VALUE =====
+    // ===== DEFINISIKAN VARIABLE =====
     var namaValue = namaField.value.trim();
     var usernameValue = usernameField.value.trim();
     var passwordValue = passwordField.value;
@@ -401,7 +401,6 @@ async function daftarNasabah() {
                 }
             }
         } catch (e) {
-            // Cek lokal
             var nasabahList = window.daftarNasabah || [];
             for (var i = 0; i < nasabahList.length; i++) {
                 if (nasabahList[i].username && nasabahList[i].username.toLowerCase() === usernameValue.toLowerCase()) {
@@ -422,7 +421,7 @@ async function daftarNasabah() {
     // ===== SIMPAN DATA =====
     showLoading(true);
     
-    var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(0, 6);
     var newNasabah = {
         id: newId,
         nama: namaValue,
@@ -442,13 +441,11 @@ async function daftarNasabah() {
             const saved = await window.db.createNasabah(newNasabah);
             console.log('✅ Nasabah tersimpan di Supabase:', saved);
             
-            // Update cache lokal
             if (!window.daftarNasabah) window.daftarNasabah = [];
             window.daftarNasabah.push(saved);
             
             showToast('✅ Akun berhasil dibuat! Silakan login.', false);
             
-            // Reset form dan tutup modal
             setTimeout(function() {
                 tutupModalDaftar();
                 document.getElementById('loginUsername').value = '';
@@ -457,7 +454,6 @@ async function daftarNasabah() {
             }, 1500);
             
         } else {
-            // Fallback ke lokal
             console.warn('⚠️ db.createNasabah tidak tersedia, simpan lokal');
             if (!window.daftarNasabah) window.daftarNasabah = [];
             window.daftarNasabah.push(newNasabah);
