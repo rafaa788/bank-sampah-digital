@@ -85,8 +85,9 @@ async function syncHargaSampah() {
     try {
         if (window.db && window.db.getHargaSampah) {
             const data = await window.db.getHargaSampah();
-            if (data && data.length > 0) {
-                // Reset data
+            if (Array.isArray(data)) {
+                // Selalu bangun ulang cache dari hasil terbaru.
+                // Jangan biarkan cache kosong/stale membuat form kehilangan pilihan.
                 window.hargaSampahDetail = {};
                 window.presetSampah = { plastik: [], logam: [], kertas: [] };
                 
