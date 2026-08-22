@@ -376,18 +376,11 @@ async function updateStatusTransaksi(id, status) {
                 return updated;
             }
         }
+        throw new Error('Database tidak tersedia');
     } catch (e) {
         console.error('❌ Gagal update status:', e.message);
+        throw e;
     }
-    
-    var data = window.daftarSampah || [];
-    for (var i = 0; i < data.length; i++) {
-        if (data[i].id === id) {
-            data[i].status = status;
-            return data[i];
-        }
-    }
-    return null;
 }
 
 async function updateHargaSampah(nama, hargaBaru) {
