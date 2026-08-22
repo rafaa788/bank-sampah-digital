@@ -13,7 +13,6 @@
 <body>
 
     <div class="dashboard nasabah-dashboard">
-        <!-- Header -->
         <header class="dashboard-header header-nasabah">
             <div class="header-content">
                 <div class="user-profile">
@@ -37,7 +36,6 @@
             </div>
         </header>
 
-        <!-- Wallet Card -->
         <section class="wallet-card">
             <div class="wallet-title">Dompet Digital</div>
             <div class="wallet-balance" id="nasabahSaldo">Rp 0</div>
@@ -51,7 +49,6 @@
             </div>
         </section>
 
-        <!-- Statistik Pribadi -->
         <div class="stats-grid-4" style="padding:0 16px 12px;">
             <div class="stat-card green">
                 <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
@@ -75,9 +72,7 @@
             </div>
         </div>
 
-        <!-- Content -->
         <main class="dashboard-content">
-            <!-- Tabs -->
             <div class="tab-container">
                 <button class="tab-btn active" data-tab="nasabah-beranda" onclick="switchNasabahTab('beranda')">
                     <i class="fa-solid fa-house"></i> Beranda
@@ -93,9 +88,7 @@
                 </button>
             </div>
 
-            <!-- Tab: Beranda -->
             <div id="nasabah-beranda" class="tab-content active">
-                <!-- Layanan Grid -->
                 <section>
                     <div class="section-header">
                         <h3>Layanan</h3>
@@ -121,7 +114,6 @@
                 </section>
             </div>
 
-            <!-- Tab: Riwayat Transaksi -->
             <div id="nasabah-riwayat" class="tab-content">
                 <div class="section-header">
                     <h3>📋 Riwayat Transaksi</h3>
@@ -145,7 +137,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Layanan -->
             <div id="nasabah-layanan" class="tab-content">
                 <div class="section-header">
                     <h3>Layanan</h3>
@@ -184,7 +175,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Profil -->
             <div id="nasabah-profil" class="tab-content">
                 <div class="section-header">
                     <h3>👤 Profil Nasabah</h3>
@@ -216,7 +206,6 @@
             </div>
         </main>
 
-        <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <div class="nav-item active" onclick="switchNasabahTab('beranda')">
                 <i class="fa-solid fa-house"></i>
@@ -245,10 +234,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-client.js"></script>
-    <script src="data-bsu.js"></script>
-    <script src="data-harga.js"></script>
-    <script src="data-sampah-list.js"></script>
-    <script src="data.js"></script>
+    <script src="data-supabase.js"></script>
     <script src="main.js"></script>
     <script src="laporan.js"></script>
     <script src="login.js"></script>
@@ -256,10 +242,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             checkSession();
-            renderNasabah();
+            syncAllData().then(function() {
+                renderNasabah();
+            });
         });
 
-        // Switch tab nasabah
         function switchNasabahTab(tab) {
             var buttons = document.querySelectorAll('.nasabah-dashboard .tab-btn');
             buttons.forEach(function(btn) { btn.classList.remove('active'); });

@@ -341,16 +341,16 @@
                     <div class="quick-card pengelola" onclick="quickLogin('pengelola')">
                         <i class="fa-solid fa-building-user"></i>
                         <span>Pengelola</span>
-                        <small>Masukkan username & password</small>
+                        <small>Isi manual</small>
                     </div>
                     <div class="quick-card admin" onclick="quickLogin('admin')">
                         <i class="fa-solid fa-user-gear"></i>
                         <span>Admin</span>
-                        <small>Masukkan username & password</small>
+                        <small>Isi manual</small>
                     </div>
                 </div>
                 <p class="quick-login-hint">
-                    💡 Nasabah: langsung masuk | Pengelola & Admin: isi username & password manual, lalu klik Masuk
+                    💡 Nasabah: langsung masuk | Pengelola & Admin: isi manual
                 </p>
             </div>
 
@@ -390,10 +390,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-client.js"></script>
-    <script src="data-bsu.js"></script>
-    <script src="data-sampah-list.js"></script>
-    <script src="data-harga.js"></script>
-    <script src="data.js"></script>
+    <script src="data-supabase.js"></script>
     <script src="main.js"></script>
     <script src="laporan.js"></script>
     <script src="login.js"></script>
@@ -405,42 +402,20 @@
             console.log('🔄 Syncing data from Supabase...');
             
             try {
-                if (window.syncNasabahFromSupabase) {
-                    await window.syncNasabahFromSupabase();
-                }
-                if (window.syncTransaksiFromSupabase) {
-                    await window.syncTransaksiFromSupabase();
-                }
-                if (window.syncHargaSampahFromSupabase) {
-                    await window.syncHargaSampahFromSupabase();
-                }
-                if (window.syncSampahListFromSupabase) {
-                    await window.syncSampahListFromSupabase();
-                }
+                await syncAllData();
                 console.log('✅ Data synced successfully');
                 console.log('👤 Total Nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
                 console.log('📄 Total Transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
+                console.log('📋 Total BSU:', window.dataBSU ? window.dataBSU.length : 0);
+                console.log('📋 Total Harga:', Object.keys(window.hargaSampahDetail).length);
             } catch (e) {
                 console.warn('⚠️ Gagal sync data:', e.message);
             }
             
-            if (window.db && window.db.seedInitialData) {
-                try {
-                    await window.db.seedInitialData();
-                } catch (e) {
-                    console.log('Seed data skipped or failed');
-                }
-            }
-            
-            if (window.seedHargaSampahToSupabase) {
-                try {
-                    await window.seedHargaSampahToSupabase();
-                } catch (e) {
-                    console.log('Seed harga skipped or failed');
-                }
-            }
-            
             console.log('💡 Ketik cekDataNasabah() di console untuk melihat data nasabah');
+            console.log('💡 Ketik cekDataTransaksi() di console untuk melihat transaksi');
+            console.log('💡 Ketik cekDataBSU() di console untuk melihat data BSU');
+            console.log('💡 Ketik cekDataHarga() di console untuk melihat data harga');
         });
     </script>
 

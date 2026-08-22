@@ -9,13 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style-admin.css">
-    <!-- Chart.js untuk grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
     <div class="dashboard admin-dashboard">
-        <!-- Header -->
         <header class="dashboard-header header-admin">
             <div class="header-content">
                 <div>
@@ -33,13 +31,11 @@
             </div>
         </header>
 
-        <!-- Wallet Card -->
         <section class="wallet-card admin-wallet">
             <div class="wallet-title">Ringkasan Dompet Global</div>
             <div class="wallet-balance" id="adminSaldoGlobal">Rp 0</div>
         </section>
 
-        <!-- Statistik Cards -->
         <div class="stats-grid-4" style="padding:0 16px 12px;">
             <div class="stat-card green">
                 <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
@@ -63,9 +59,7 @@
             </div>
         </div>
 
-        <!-- Content -->
         <main class="dashboard-content">
-            <!-- Tabs -->
             <div class="tab-container">
                 <button class="tab-btn active" data-tab="admin-dashboard" onclick="switchAdminTab('dashboard')">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard
@@ -87,10 +81,7 @@
                 </button>
             </div>
 
-            <!-- TAB: DASHBOARD (DENGAN DIAGRAM) -->
             <div id="admin-dashboard" class="tab-content active">
-
-                <!-- Grafik 1: Status Transaksi (Pie Chart) -->
                 <div class="chart-container">
                     <div class="chart-title">
                         <span> Status Transaksi</span>
@@ -101,7 +92,6 @@
                     </div>
                 </div>
 
-                <!-- Grafik 2: Transaksi per BSU (Bar Chart) -->
                 <div class="chart-container">
                     <div class="chart-title">
                         <span> Transaksi per BSU</span>
@@ -112,7 +102,6 @@
                     </div>
                 </div>
 
-                <!-- Grafik 3: Trend Bulanan (Line Chart) -->
                 <div class="chart-container">
                     <div class="chart-title">
                         <span> Trend Transaksi per Bulan</span>
@@ -123,7 +112,6 @@
                     </div>
                 </div>
 
-                <!-- Top 5 Nasabah -->
                 <div class="section-header">
                     <h3> Top 5 Nasabah dengan Setoran Tertinggi</h3>
                 </div>
@@ -134,7 +122,6 @@
                     </div>
                 </div>
 
-                <!-- Ringkasan per Jenis Sampah -->
                 <div class="section-header" style="margin-top:12px;">
                     <h3> Ringkasan per Jenis Sampah</h3>
                 </div>
@@ -159,7 +146,6 @@
                 </div>
             </div>
 
-            <!-- TAB: Verifikasi -->
             <div id="admin-verifikasi" class="tab-content">
                 <div class="section-header">
                     <h3>Verifikasi Data Sampah</h3>
@@ -173,7 +159,6 @@
                 </div>
             </div>
 
-            <!-- TAB: Harga Sampah -->
             <div id="admin-harga" class="tab-content">
                 <div class="section-header">
                     <h3>Atur Data Harga Sampah</h3>
@@ -194,7 +179,6 @@
                 </div>
             </div>
 
-            <!-- TAB: Data BSU -->
             <div id="admin-bsu" class="tab-content">
                 <div class="section-header">
                     <h3>Data BSU</h3>
@@ -218,7 +202,6 @@
                 </div>
             </div>
 
-            <!-- TAB: Data Nasabah -->
             <div id="admin-nasabah" class="tab-content">
                 <div class="section-header">
                     <h3>Data Nasabah</h3>
@@ -234,7 +217,6 @@
                 </div>
             </div>
 
-            <!-- TAB: Laporan -->
             <div id="admin-laporan" class="tab-content">
                 <div class="section-header">
                     <h3><i class="fa-solid fa-file-lines"></i> Ekspor Laporan</h3>
@@ -278,7 +260,6 @@
             </div>
         </main>
 
-        <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <div class="nav-item active" onclick="switchAdminTab('dashboard')">
                 <i class="fa-solid fa-chart-pie"></i>
@@ -307,10 +288,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-client.js"></script>
-    <script src="data-bsu.js"></script>
-    <script src="data-harga.js"></script>
-    <script src="data-sampah-list.js"></script>
-    <script src="data.js"></script>
+    <script src="data-supabase.js"></script>
     <script src="main.js"></script>
     <script src="laporan.js"></script>
     <script src="login.js"></script>
@@ -318,7 +296,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             checkSession();
-            renderAdmin();
+            syncAllData().then(function() {
+                renderAdmin();
+            });
         });
     </script>
 

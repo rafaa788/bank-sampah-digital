@@ -11,10 +11,18 @@ window.daftarSampah = window.daftarSampah || [];
 // =============================================
 
 async function syncAllData() {
-    await syncNasabahFromSupabase();
-    await syncTransaksiFromSupabase();
-    console.log('✅ All data synced from Supabase');
-    return true;
+    console.log('🔄 Syncing all data from Supabase...');
+    try {
+        await syncNasabahFromSupabase();
+        await syncTransaksiFromSupabase();
+        await syncHargaSampahFromSupabase();
+        await syncSampahListFromSupabase();
+        console.log('✅ All data synced from Supabase');
+        return true;
+    } catch (e) {
+        console.error('❌ Error syncing data:', e.message);
+        return false;
+    }
 }
 
 async function syncNasabahFromSupabase() {
@@ -30,6 +38,25 @@ async function syncNasabahFromSupabase() {
     } catch (e) {
         console.log('⚠️ Gagal sync nasabah:', e.message);
     }
+    
+    // Fallback: coba ambil dari Supabase langsung
+    try {
+        const supabase = window.db?.supabase;
+        if (supabase) {
+            const { data, error } = await supabase
+                .from('nasabah')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (!error && data && data.length > 0) {
+                window.daftarNasabah = data;
+                console.log('📥 Synced nasabah (direct):', data.length);
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync nasabah direct:', e.message);
+    }
+    
     return window.daftarNasabah || [];
 }
 
@@ -46,17 +73,36 @@ async function syncTransaksiFromSupabase() {
     } catch (e) {
         console.log('⚠️ Gagal sync transaksi:', e.message);
     }
+    
+    // Fallback: coba ambil dari Supabase langsung
+    try {
+        const supabase = window.db?.supabase;
+        if (supabase) {
+            const { data, error } = await supabase
+                .from('transaksi')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (!error && data && data.length > 0) {
+                window.daftarSampah = data;
+                console.log('📥 Synced transaksi (direct):', data.length);
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync transaksi direct:', e.message);
+    }
+    
     return window.daftarSampah || [];
 }
 
 // =============================================
-// FUNGSI GET BSU BY ID - TANPA REKURSI
+// FUNGSI GET BSU BY ID - PRIORITAS SUPABASE
 // =============================================
 
 function getBSUById(id) {
     if (!id) return null;
     
-    // 1. Cek di window.dataBSU (data lokal)
+    // 1. Cek di dataBSU (lokal) dulu untuk kecepatan
     if (window.dataBSU && Array.isArray(window.dataBSU)) {
         for (var i = 0; i < window.dataBSU.length; i++) {
             if (window.dataBSU[i].id === id) {
@@ -65,31 +111,41 @@ function getBSUById(id) {
         }
     }
     
-    // 2. Cek di db (async, tapi kita return null dulu)
-    // Ini akan dipanggil async di tempat lain
+    // 2. Coba dari Supabase (async, tapi kita return null dulu)
+    // Data akan di-sync melalui syncAllData()
+    return null;
+}
+
+// Versi async untuk mendapatkan BSU dari Supabase
+async function getBSUByIdAsync(id) {
+    if (!id) return null;
+    
+    // Cek lokal dulu
+    var local = getBSUById(id);
+    if (local) return local;
+    
+    // Cek dari Supabase
+    try {
+        if (window.db && window.db.getBSUById) {
+            return await window.db.getBSUById(id);
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal get BSU dari Supabase:', e.message);
+    }
     return null;
 }
 
 // =============================================
-// FUNGSI CRUD - REALTIME
+// FUNGSI CRUD - DENGAN SUPABASE
 // =============================================
 
 async function tambahTransaksi(data) {
-    console.log('📝 Menyimpan transaksi...', data);
+    console.log('📝 Menyimpan transaksi ke Supabase...', data);
     
     var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     
-    // Cari BSU dari data lokal
-    var bsu = null;
-    if (window.dataBSU && Array.isArray(window.dataBSU)) {
-        for (var i = 0; i < window.dataBSU.length; i++) {
-            if (window.dataBSU[i].id === data.bsuId || window.dataBSU[i].id === data.bsu_id) {
-                bsu = window.dataBSU[i];
-                break;
-            }
-        }
-    }
-    
+    // Cari BSU
+    var bsu = getBSUById(data.bsuId) || getBSUById(data.bsu_id);
     var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
     var transaksi = {
@@ -116,22 +172,25 @@ async function tambahTransaksi(data) {
     
     console.log('📦 Transaksi object:', transaksi);
     
-    // Simpan ke Supabase
+    // SIMPAN KE SUPABASE
+    var saved = null;
     try {
         if (window.db && window.db.createTransaksi) {
             console.log('💾 Menyimpan ke Supabase...');
-            const saved = await window.db.createTransaksi(transaksi);
+            saved = await window.db.createTransaksi(transaksi);
             console.log('✅ Transaksi tersimpan di Supabase:', saved);
             
             // Update cache lokal
-            if (!window.daftarSampah) window.daftarSampah = [];
-            var existingIndex = window.daftarSampah.findIndex(function(item) {
-                return item.id === saved.id;
-            });
-            if (existingIndex > -1) {
-                window.daftarSampah[existingIndex] = saved;
-            } else {
-                window.daftarSampah.unshift(saved);
+            if (saved) {
+                if (!window.daftarSampah) window.daftarSampah = [];
+                var existingIndex = window.daftarSampah.findIndex(function(item) {
+                    return item.id === saved.id;
+                });
+                if (existingIndex > -1) {
+                    window.daftarSampah[existingIndex] = saved;
+                } else {
+                    window.daftarSampah.unshift(saved);
+                }
             }
             
             // Panggil callback realtime
@@ -140,24 +199,19 @@ async function tambahTransaksi(data) {
             }
             
             return saved;
+        } else {
+            console.warn('⚠️ db.createTransaksi tidak tersedia!');
         }
     } catch (e) {
         console.error('❌ Gagal simpan ke Supabase:', e.message);
-        console.log('💾 Menyimpan ke lokal sebagai fallback...');
+        showToast('⚠️ Gagal menyimpan ke database: ' + e.message, true);
     }
     
-    // Fallback ke lokal
+    // FALLBACK: Simpan ke lokal jika Supabase gagal
+    console.log('💾 Menyimpan ke lokal sebagai fallback...');
     if (!window.daftarSampah) window.daftarSampah = [];
-    var existingIndex = window.daftarSampah.findIndex(function(item) {
-        return item.id === transaksi.id;
-    });
-    if (existingIndex > -1) {
-        window.daftarSampah[existingIndex] = transaksi;
-    } else {
-        window.daftarSampah.unshift(transaksi);
-    }
-    
-    console.log('✅ Transaksi tersimpan di lokal (fallback)');
+    window.daftarSampah.unshift(transaksi);
+    showToast('⚠️ Data disimpan lokal (offline mode)', true);
     return transaksi;
 }
 
@@ -172,6 +226,7 @@ async function updateStatusTransaksi(id, status) {
             });
             console.log('✅ Status transaksi diupdate di Supabase');
             
+            // Update cache lokal
             var data = window.daftarSampah || [];
             for (var i = 0; i < data.length; i++) {
                 if (data[i].id === id) {
@@ -191,6 +246,7 @@ async function updateStatusTransaksi(id, status) {
         console.warn('⚠️ Gagal update ke Supabase:', e.message);
     }
     
+    // Fallback
     var data = window.daftarSampah || [];
     var updated = null;
     for (var i = 0; i < data.length; i++) {
@@ -204,12 +260,16 @@ async function updateStatusTransaksi(id, status) {
 }
 
 // =============================================
-// FUNGSI QUERY
+// FUNGSI QUERY - PRIORITAS SUPABASE
 // =============================================
 
 function getTransaksiByStatus(status) {
     var data = window.daftarSampah || [];
-    return data.filter(function(item) { return item.status === status; });
+    var result = data.filter(function(item) { 
+        return item.status === status; 
+    });
+    console.log('📋 getTransaksiByStatus("' + status + '"):', result.length, 'items');
+    return result;
 }
 
 function getTransaksiByBSU(bsuId) {
@@ -256,6 +316,24 @@ function getNasabahByUsername(username) {
     return null;
 }
 
+async function getNasabahByUsernameAsync(username) {
+    if (!username) return null;
+    
+    // Cek lokal dulu
+    var local = getNasabahByUsername(username);
+    if (local) return local;
+    
+    // Cek dari Supabase
+    try {
+        if (window.db && window.db.getNasabahByUsername) {
+            return await window.db.getNasabahByUsername(username);
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal get nasabah dari Supabase:', e.message);
+    }
+    return null;
+}
+
 function hitungSaldoNasabah(nasabahId) {
     var total = 0;
     var data = window.daftarSampah || [];
@@ -284,6 +362,74 @@ function hitungPoinNasabah(nasabahId) {
 }
 
 // =============================================
+// SYNC HARGA SAMPAH
+// =============================================
+
+async function syncHargaSampahFromSupabase() {
+    try {
+        if (window.db && window.db.getHargaSampah) {
+            const data = await window.db.getHargaSampah();
+            if (data && data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    if (window.hargaSampahDetail) {
+                        window.hargaSampahDetail[item.nama] = item.harga_per_kg;
+                    }
+                }
+                console.log('📥 Synced harga sampah from Supabase:', data.length);
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync harga, pakai data lokal');
+    }
+    return null;
+}
+
+async function syncSampahListFromSupabase() {
+    try {
+        if (window.db && window.db.getHargaSampah) {
+            const data = await window.db.getHargaSampah();
+            if (data && data.length > 0) {
+                var newPreset = { plastik: [], logam: [], kertas: [] };
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var jenis = item.jenis || 'plastik';
+                    if (newPreset[jenis]) {
+                        newPreset[jenis].push(item.nama);
+                    }
+                }
+                if (newPreset.plastik.length > 0 || newPreset.logam.length > 0 || newPreset.kertas.length > 0) {
+                    window.presetSampah = newPreset;
+                    console.log('📥 Synced sampah list from Supabase');
+                }
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal sync sampah list, pakai data lokal');
+    }
+    return null;
+}
+
+function getHargaByNamaSampah(namaSampah) {
+    if (!namaSampah) return 2000;
+    
+    if (window.hargaSampahDetail && window.hargaSampahDetail[namaSampah]) {
+        return window.hargaSampahDetail[namaSampah];
+    }
+    
+    var namaLower = namaSampah.toLowerCase();
+    for (var key in window.hargaSampahDetail) {
+        if (namaLower.includes(key.toLowerCase()) || key.toLowerCase().includes(namaLower)) {
+            return window.hargaSampahDetail[key];
+        }
+    }
+    
+    return 2000;
+}
+
+// =============================================
 // DEBUG HELPER
 // =============================================
 
@@ -303,28 +449,42 @@ function cekDataTransaksi() {
     return data;
 }
 
+function forceSyncData() {
+    console.log('🔄 Force sync data...');
+    return syncAllData().then(function() {
+        console.log('✅ Sync selesai');
+        console.log('📋 Total transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
+        console.log('📋 Total nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
+        return window.daftarSampah;
+    });
+}
+
 // =============================================
 // EXPORT KE GLOBAL
 // =============================================
 window.syncAllData = syncAllData;
 window.syncNasabahFromSupabase = syncNasabahFromSupabase;
 window.syncTransaksiFromSupabase = syncTransaksiFromSupabase;
+window.syncHargaSampahFromSupabase = syncHargaSampahFromSupabase;
+window.syncSampahListFromSupabase = syncSampahListFromSupabase;
 window.getTransaksiByStatus = getTransaksiByStatus;
 window.getTransaksiByBSU = getTransaksiByBSU;
 window.getTransaksiByNasabah = getTransaksiByNasabah;
 window.getNasabahById = getNasabahById;
 window.getNasabahByBSU = getNasabahByBSU;
 window.getNasabahByUsername = getNasabahByUsername;
+window.getNasabahByUsernameAsync = getNasabahByUsernameAsync;
 window.getBSUById = getBSUById;
+window.getBSUByIdAsync = getBSUByIdAsync;
 window.tambahTransaksi = tambahTransaksi;
 window.updateStatusTransaksi = updateStatusTransaksi;
 window.hitungSaldoNasabah = hitungSaldoNasabah;
 window.hitungPoinNasabah = hitungPoinNasabah;
+window.getHargaByNamaSampah = getHargaByNamaSampah;
 window.cekDataNasabah = cekDataNasabah;
 window.cekDataTransaksi = cekDataTransaksi;
+window.forceSyncData = forceSyncData;
 
-console.log('✅ Data module loaded');
-console.log('📋 Data BSU tersedia:', window.dataBSU ? window.dataBSU.length : 0);
-console.log('📋 Data Nasabah tersedia:', window.daftarNasabah ? window.daftarNasabah.length : 0);
-console.log('📋 Data Transaksi tersedia:', window.daftarSampah ? window.daftarSampah.length : 0);
-console.log('💡 Ketik cekDataNasabah() atau cekDataTransaksi() di console untuk debug');
+console.log('✅ Data module loaded with Supabase integration');
+console.log('💡 Ketik forceSyncData() di console untuk sync data manual');
+console.log('💡 Ketik cekDataTransaksi() di console untuk lihat semua transaksi');

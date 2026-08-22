@@ -1,11 +1,7 @@
 // login.js
 // =====================================================
-// FUNGSI LOGIN - NASABAH LANGSUNG MASUK
+// LOGIN DENGAN SUPABASE
 // =====================================================
-
-// =============================================
-// FUNGSI LOGIN
-// =============================================
 
 async function handleLogin() {
     var username = document.getElementById('loginUsername').value.trim();
@@ -51,7 +47,7 @@ async function handleLogin() {
         }
         
         // 2. CEK PENGELOLA BSU
-        var bsu = await validateBSULoginSupabase(username, password);
+        var bsu = await validateBSULogin(username, password);
         if (bsu) {
             console.log('✅ Login sebagai Pengelola:', bsu.nama);
             sessionStorage.setItem('role', 'pengelola');
@@ -68,15 +64,31 @@ async function handleLogin() {
             return;
         }
         
-        // 3. CEK NASABAH - AUTO CREATE JIKA BELUM ADA
-        var nasabah = await getOrCreateNasabah(username, password);
+        // 3. CEK NASABAH
+        var nasabah = await validateNasabahLogin(username, password);
         if (nasabah) {
             console.log('✅ Login sebagai Nasabah:', nasabah.nama);
             sessionStorage.setItem('role', 'nasabah');
             sessionStorage.setItem('nasabahId', nasabah.id);
             sessionStorage.setItem('nasabahNama', nasabah.nama);
-            sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id || nasabah.bsuId);
+            sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id);
             showToast('✅ Selamat datang ' + nasabah.nama + '!', false);
+            showLoading(false);
+            setTimeout(function() {
+                window.location.href = 'nasabah.html';
+            }, 500);
+            return;
+        }
+        
+        // 4. BUAT NASABAH BARU (jika belum ada)
+        var newNasabah = await createNasabahOtomatis(username, password);
+        if (newNasabah) {
+            console.log('✅ Nasabah baru dibuat:', newNasabah.nama);
+            sessionStorage.setItem('role', 'nasabah');
+            sessionStorage.setItem('nasabahId', newNasabah.id);
+            sessionStorage.setItem('nasabahNama', newNasabah.nama);
+            sessionStorage.setItem('nasabahBsuId', newNasabah.bsu_id);
+            showToast('✅ Selamat datang ' + newNasabah.nama + '! (Akun baru)', false);
             showLoading(false);
             setTimeout(function() {
                 window.location.href = 'nasabah.html';
@@ -95,18 +107,35 @@ async function handleLogin() {
     }
 }
 
-// =============================================
-// FUNGSI GET OR CREATE NASABAH (OTOMATIS)
-// =============================================
-
-async function getOrCreateNasabah(username, password) {
-    var existing = await validateNasabahLoginSupabase(username, password);
-    if (existing) {
-        return existing;
+async function validateBSULogin(username, password) {
+    try {
+        if (window.db && window.db.getBSUByUsername) {
+            const data = await window.db.getBSUByUsername(username);
+            if (data && data.password === password) {
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal cek BSU:', e.message);
     }
-    
-    console.log('📝 Membuat akun nasabah otomatis untuk:', username);
-    
+    return null;
+}
+
+async function validateNasabahLogin(username, password) {
+    try {
+        if (window.db && window.db.getNasabahByUsername) {
+            const data = await window.db.getNasabahByUsername(username);
+            if (data && data.password === password) {
+                return data;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Gagal cek Nasabah:', e.message);
+    }
+    return null;
+}
+
+async function createNasabahOtomatis(username, password) {
     var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     var newNasabah = {
         id: newId,
@@ -118,128 +147,52 @@ async function getOrCreateNasabah(username, password) {
         rt: 'RT01',
         alamat: '',
         no_hp: '',
+        is_manual: true,
         created_at: new Date().toISOString()
     };
     
     try {
         if (window.db && window.db.createNasabah) {
             const saved = await window.db.createNasabah(newNasabah);
-            console.log('✅ Nasabah otomatis tersimpan di Supabase:', saved);
-            if (!window.daftarNasabah) window.daftarNasabah = [];
-            window.daftarNasabah.push(saved);
-            return saved;
-        } else {
-            console.warn('⚠️ db.createNasabah tidak tersedia, simpan lokal');
-            if (!window.daftarNasabah) window.daftarNasabah = [];
-            window.daftarNasabah.push(newNasabah);
-            return newNasabah;
-        }
-    } catch (error) {
-        console.error('❌ Error menyimpan nasabah otomatis:', error);
-        return null;
-    }
-}
-
-// =============================================
-// VALIDASI LOGIN SUPABASE
-// =============================================
-
-async function validateBSULoginSupabase(username, password) {
-    try {
-        if (window.db && window.db.getBSUByUsername) {
-            const data = await window.db.getBSUByUsername(username);
-            if (data && data.password === password) {
-                return data;
+            if (saved) {
+                if (!window.daftarNasabah) window.daftarNasabah = [];
+                window.daftarNasabah.push(saved);
+                return saved;
             }
         }
     } catch (e) {
-        console.log('Fallback ke data lokal BSU');
+        console.error('❌ Gagal buat nasabah:', e.message);
     }
     
-    var bsuData = window.dataBSU || [];
-    for (var i = 0; i < bsuData.length; i++) {
-        if (bsuData[i].username && bsuData[i].username.toLowerCase() === username.toLowerCase()) {
-            if (bsuData[i].password === password) {
-                return bsuData[i];
-            }
-            return null;
-        }
-    }
-    return null;
+    if (!window.daftarNasabah) window.daftarNasabah = [];
+    window.daftarNasabah.push(newNasabah);
+    return newNasabah;
 }
-
-async function validateNasabahLoginSupabase(username, password) {
-    try {
-        if (window.db && window.db.getNasabahByUsername) {
-            const data = await window.db.getNasabahByUsername(username);
-            if (data && data.password === password) {
-                return data;
-            }
-        }
-    } catch (e) {
-        console.log('Fallback ke data lokal Nasabah');
-    }
-    
-    var nasabahList = window.daftarNasabah || [];
-    for (var i = 0; i < nasabahList.length; i++) {
-        if (nasabahList[i].username && nasabahList[i].username.toLowerCase() === username.toLowerCase()) {
-            if (nasabahList[i].password === password) {
-                return nasabahList[i];
-            }
-            return null;
-        }
-    }
-    return null;
-}
-
-// =============================================
-// QUICK LOGIN
-// =============================================
 
 function quickLogin(role) {
     if (role === 'nasabah') {
-        // NASABAH: LANGSUNG MASUK TANPA PASSWORD
         var randomName = 'Nasabah_' + Math.floor(Math.random() * 1000);
         var username = 'user' + Date.now();
         var password = 'user123';
         
-        var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        var newNasabah = {
-            id: newId,
-            nama: randomName,
-            username: username,
-            password: password,
-            bsu_id: 'bsu_mede1',
-            rw: 'RW01',
-            rt: 'RT01',
-            alamat: '',
-            no_hp: '',
-            created_at: new Date().toISOString()
-        };
-        
-        if (!window.daftarNasabah) window.daftarNasabah = [];
-        window.daftarNasabah.push(newNasabah);
-        
-        sessionStorage.setItem('role', 'nasabah');
-        sessionStorage.setItem('nasabahId', newId);
-        sessionStorage.setItem('nasabahNama', randomName);
-        sessionStorage.setItem('nasabahBsuId', 'bsu_mede1');
-        
-        showToast('✅ Selamat datang ' + randomName + '!', false);
-        
-        setTimeout(function() {
-            window.location.href = 'nasabah.html';
-        }, 300);
+        createNasabahOtomatis(username, password).then(function(nasabah) {
+            sessionStorage.setItem('role', 'nasabah');
+            sessionStorage.setItem('nasabahId', nasabah.id);
+            sessionStorage.setItem('nasabahNama', nasabah.nama);
+            sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id);
+            showToast('✅ Selamat datang ' + nasabah.nama + '!', false);
+            setTimeout(function() {
+                window.location.href = 'nasabah.html';
+            }, 300);
+        });
         
     } else if (role === 'pengelola') {
-        // PENGELOLA: TIDAK MENGISI FORM, HANYA FOKUS KE INPUT USERNAME
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginUsername').focus();
         showToast('🔑 Masukkan username dan password Pengelola (mede1 / mede123)', false);
         
     } else if (role === 'admin') {
-        // ADMIN: TIDAK MENGISI FORM, HANYA FOKUS KE INPUT USERNAME
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginUsername').focus();
@@ -247,14 +200,9 @@ function quickLogin(role) {
     }
 }
 
-// =============================================
-// FUNGSI LAINNYA
-// =============================================
-
 function checkSession() {
     var role = sessionStorage.getItem('role');
     var currentPage = window.location.pathname.split('/').pop();
-    console.log('🔍 Check session - Role:', role, 'Page:', currentPage);
     
     if (role === 'nasabah' && (currentPage === 'index.html' || currentPage === '')) {
         window.location.href = 'nasabah.html';
@@ -301,17 +249,10 @@ function showLoading(show) {
     loading.style.display = show ? 'flex' : 'none';
 }
 
-// =============================================
-// EXPORT KE GLOBAL
-// =============================================
 window.handleLogin = handleLogin;
 window.quickLogin = quickLogin;
 window.logoutUser = logoutUser;
 window.checkSession = checkSession;
 window.showLoading = showLoading;
-window.getOrCreateNasabah = getOrCreateNasabah;
 
-console.log('✅ Login Module loaded');
-console.log('👤 Nasabah: klik tombol Nasabah langsung masuk!');
-console.log('👤 Admin: admin / admin123 (isi manual)');
-console.log('👤 BSU: mede1 / mede123 (isi manual)');
+console.log('✅ Login Module loaded with Supabase');

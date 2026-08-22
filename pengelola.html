@@ -13,7 +13,6 @@
 <body>
 
     <div class="dashboard pengelola-dashboard">
-        <!-- Header -->
         <header class="dashboard-header header-pengelola">
             <div class="header-content">
                 <div>
@@ -32,7 +31,6 @@
             </div>
         </header>
 
-        <!-- Wallet Card -->
         <section class="wallet-card">
             <div class="wallet-title">Dompet Operasional</div>
             <div class="wallet-balance" id="pengelolaSaldo">Rp 0</div>
@@ -43,9 +41,7 @@
             </div>
         </section>
 
-        <!-- Content -->
         <main class="dashboard-content">
-            <!-- Tabs -->
             <div class="tab-container">
                 <button class="tab-btn active" data-tab="pengelola-dashboard" onclick="switchPengelolaTab('dashboard')">
                     <i class="fa-solid fa-chart-simple"></i> Dashboard
@@ -64,9 +60,7 @@
                 </button>
             </div>
 
-            <!-- Tab: Dashboard (STATISTIK + REKAP TRANSAKSI) -->
             <div id="pengelola-dashboard" class="tab-content active">
-                <!-- Statistik Grid -->
                 <div class="stats-grid-4">
                     <div class="stat-card green">
                         <div class="stat-icon"><i class="fa-solid fa-check-circle"></i></div>
@@ -103,7 +97,6 @@
                     </div>
                 </div>
 
-                <!-- Rekap Transaksi Diverifikasi -->
                 <div class="section-header">
                     <h3>Rekap Transaksi Diverifikasi</h3>
                     <span style="font-size:9px;color:#94a3b8;" id="statTotalTransaksi">Total: 0</span>
@@ -116,7 +109,6 @@
                 </div>
             </div>
 
-            <!-- Tab: Setoran -->
             <div id="pengelola-setoran" class="tab-content">
                 <div class="section-header">
                     <h3>Setoran Terbaru</h3>
@@ -130,90 +122,82 @@
                 </div>
             </div>
 
+            <div id="pengelola-input" class="tab-content">
+                <div class="section-header">
+                    <h3>Input Data Sampah</h3>
+                    <span style="font-size:9px;color:#64748b;">Ketua: <span id="inputKetuaDisplay">Bapak Slamet</span></span>
+                </div>
+                <div class="input-form">
+                    <input type="hidden" id="inputKetua" value="">
+                    
+                    <div class="form-group">
+                        <label for="inputNamaNasabahManual">Nama Nasabah <span style="color:red;">*</span></label>
+                        <input type="text" id="inputNamaNasabahManual" class="form-control" placeholder="Masukkan nama nasabah">
+                        <small style="color:#94a3b8;font-size:9px;">💡 Nasabah akan otomatis terdaftar saat data disimpan</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Jenis Sampah</label>
+                        <select id="inputJenis" class="form-control" onchange="updateSampahList()">
+                            <option value="plastik">Plastik</option>
+                            <option value="logam">Logam</option>
+                            <option value="kertas">Kertas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Sampah</label>
+                        <select id="inputNamaSampah" class="form-control" onchange="updateHargaOtomatis()">
+                            <option value="">Pilih Nama Sampah</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Berat (kg)</label>
+                            <input type="number" id="inputBerat" class="form-control" placeholder="0" step="0.1" oninput="updateHargaOtomatis()">
+                        </div>
+                        <div class="form-group half">
+                            <label>Harga / Kg</label>
+                            <input type="text" id="inputHarga" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Nilai</label>
+                        <input type="text" id="inputTotal" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Foto Timbang</label>
+                        <input type="file" id="fotoTimbang" class="form-control" accept="image/*" capture="environment">
+                        <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+                        <div style="margin-top:5px;">
+                            <img id="previewTimbang" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Foto Hasil</label>
+                        <input type="file" id="fotoHasil" class="form-control" accept="image/*" capture="environment">
+                        <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+                        <div style="margin-top:5px;">
+                            <img id="previewHasil" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Foto Bukti</label>
+                        <input type="file" id="fotoBukti" class="form-control" accept="image/*" capture="environment">
+                        <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
+                        <div style="margin-top:5px;">
+                            <img id="previewBukti" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary btn-block" onclick="submitDataSampah()">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Data Sampah
+                    </button>
+                </div>
+            </div>
 
-
-        <!-- Tab: Input Sampah -->
-<div id="pengelola-input" class="tab-content">
-    <div class="section-header">
-        <h3>Input Data Sampah</h3>
-        <span style="font-size:9px;color:#64748b;">Ketua: <span id="inputKetuaDisplay">Bapak Slamet</span></span>
-    </div>
-    <div class="input-form">
-  
-        <input type="hidden" id="inputKetua" value="">
-        
-        <!-- GANTI DROPDOWN DENGAN INPUT MANUAL -->
-        <div class="form-group">
-            <label for="inputNamaNasabahManual">Nama Nasabah <span style="color:red;">*</span></label>
-            <input type="text" id="inputNamaNasabahManual" class="form-control" placeholder="Masukkan nama nasabah">
-            <small style="color:#94a3b8;font-size:9px;">💡 Nasabah akan otomatis terdaftar saat data disimpan</small>
-        </div>
-        
-        <div class="form-group">
-            <label>Jenis Sampah</label>
-            <select id="inputJenis" class="form-control" onchange="updateSampahList()">
-                <option value="plastik">Plastik</option>
-                <option value="logam">Logam</option>
-                <option value="kertas">Kertas</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Nama Sampah</label>
-            <select id="inputNamaSampah" class="form-control" onchange="updateHargaOtomatis()">
-                <option value="">Pilih Nama Sampah</option>
-            </select>
-        </div>
-        <div class="form-row">
-            <div class="form-group half">
-                <label>Berat (kg)</label>
-                <input type="number" id="inputBerat" class="form-control" placeholder="0" step="0.1" oninput="updateHargaOtomatis()">
-            </div>
-            <div class="form-group half">
-                <label>Harga / Kg</label>
-                <input type="text" id="inputHarga" class="form-control" readonly>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Total Nilai</label>
-            <input type="text" id="inputTotal" class="form-control" readonly>
-        </div>
-        
-        <!-- FOTO TIMBANG -->
-        <div class="form-group">
-            <label>Foto Timbang</label>
-            <input type="file" id="fotoTimbang" class="form-control" accept="image/*" capture="environment">
-            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
-            <div style="margin-top:5px;">
-                <img id="previewTimbang" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
-            </div>
-        </div>
-        
-        <!-- FOTO HASIL -->
-        <div class="form-group">
-            <label>Foto Hasil</label>
-            <input type="file" id="fotoHasil" class="form-control" accept="image/*" capture="environment">
-            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
-            <div style="margin-top:5px;">
-                <img id="previewHasil" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
-            </div>
-        </div>
-        
-        <!-- FOTO BUKTI -->
-        <div class="form-group">
-            <label>Foto Bukti</label>
-            <input type="file" id="fotoBukti" class="form-control" accept="image/*" capture="environment">
-            <small style="color:#94a3b8;font-size:9px;">📸 Klik untuk buka kamera atau pilih dari galeri</small>
-            <div style="margin-top:5px;">
-                <img id="previewBukti" style="display:none;max-width:100%;max-height:150px;border-radius:8px;border:1px solid #e2e8f0;padding:4px;">
-            </div>
-        </div>
-        
-        <button class="btn-primary btn-block" onclick="submitDataSampah()">
-            <i class="fa-solid fa-floppy-disk"></i> Simpan Data Sampah
-        </button>
-    </div>
-</div>
-            <!-- Tab: Nasabah -->
             <div id="pengelola-nasabah" class="tab-content">
                 <div class="section-header">
                     <h3>Data Nasabah</h3>
@@ -228,14 +212,12 @@
                 </div>
             </div>
 
-            <!-- Tab: Laporan (TERPISAH) -->
             <div id="pengelola-laporan" class="tab-content">
                 <div class="section-header">
                     <h3><i class="fa-solid fa-file-lines"></i> Ekspor Laporan</h3>
                     <span style="font-size:9px;color:#94a3b8;">Pilih format laporan yang ingin diekspor</span>
                 </div>
 
-                <!-- Laporan Mingguan -->
                 <div class="laporan-section">
                     <div class="section-header">
                         <h3> Laporan Mingguan</h3>
@@ -254,7 +236,6 @@
                     </div>
                 </div>
 
-                <!-- Laporan Bulanan -->
                 <div class="laporan-section">
                     <div class="section-header">
                         <h3> Laporan Bulanan</h3>
@@ -273,7 +254,6 @@
                     </div>
                 </div>
 
-                <!-- Laporan Tahunan -->
                 <div class="laporan-section">
                     <div class="section-header">
                         <h3> Laporan Tahunan</h3>
@@ -292,7 +272,6 @@
                     </div>
                 </div>
 
-                <!-- Laporan Full -->
                 <div class="laporan-section">
                     <div class="section-header">
                         <h3> Laporan Lengkap</h3>
@@ -314,38 +293,34 @@
 
         </main>
 
-        <!--- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <div class="nav-item active" data-nav="dashboard" onclick="switchPengelolaTab('dashboard')">
-            <i class="fa-solid fa-chart-simple"></i>
-            <span>Dashboard</span>
-        </div>
-        <div class="nav-item" data-nav="setoran" onclick="switchPengelolaTab('setoran')">
-            <i class="fa-solid fa-list"></i>
-            <span>Setoran</span>
-        </div>
-        <div class="nav-fab" data-nav="input" onclick="switchPengelolaTab('input')">
-            <i class="fa-solid fa-plus"></i>
-        </div>
-        <div class="nav-item" data-nav="nasabah" onclick="switchPengelolaTab('nasabah')">
-            <i class="fa-solid fa-users"></i>
-            <span>Nasabah</span>
-        </div>
-        <div class="nav-item" data-nav="laporan" onclick="switchPengelolaTab('laporan')">
-            <i class="fa-solid fa-file-lines"></i>
-            <span>Laporan</span>
-        </div>
-    </nav>
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-nav="dashboard" onclick="switchPengelolaTab('dashboard')">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" data-nav="setoran" onclick="switchPengelolaTab('setoran')">
+                <i class="fa-solid fa-list"></i>
+                <span>Setoran</span>
+            </div>
+            <div class="nav-fab" data-nav="input" onclick="switchPengelolaTab('input')">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="nav-item" data-nav="nasabah" onclick="switchPengelolaTab('nasabah')">
+                <i class="fa-solid fa-users"></i>
+                <span>Nasabah</span>
+            </div>
+            <div class="nav-item" data-nav="laporan" onclick="switchPengelolaTab('laporan')">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Laporan</span>
+            </div>
+        </nav>
     </div>
 
     <div id="toast" class="toast"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-client.js"></script>
-    <script src="data-bsu.js"></script>
-    <script src="data-harga.js"></script>
-    <script src="data-sampah-list.js"></script>
-    <script src="data.js"></script>
+    <script src="data-supabase.js"></script>
     <script src="main.js"></script>
     <script src="laporan.js"></script>
     <script src="login.js"></script>
@@ -353,7 +328,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             checkSession();
-            renderPengelola();
+            syncAllData().then(function() {
+                renderPengelola();
+            });
             
             var ketua = sessionStorage.getItem('bsuKetua') || 'Ketua BSU';
             document.getElementById('inputKetuaDisplay').textContent = ketua;
