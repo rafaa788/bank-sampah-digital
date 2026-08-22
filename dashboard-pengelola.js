@@ -577,7 +577,7 @@ function updateSampahList() {
     
     // Simpan pilihan saat daftar di-refresh oleh realtime/auto-refresh.
     var selectedValue = select.value;
-    var list = presetSampah[jenis] || [];
+    var list = (window.presetSampah && window.presetSampah[jenis]) || [];
     
     select.innerHTML = '<option value="">Pilih Nama Sampah</option>';
     for (var i = 0; i < list.length; i++) {
