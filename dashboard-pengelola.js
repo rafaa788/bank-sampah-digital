@@ -540,11 +540,17 @@ function updateSampahList() {
     var select = document.getElementById('inputNamaSampah');
     if (!select) return;
     
+    // Simpan pilihan saat daftar di-refresh oleh realtime/auto-refresh.
+    var selectedValue = select.value;
     var list = presetSampah[jenis] || [];
     
     select.innerHTML = '<option value="">Pilih Nama Sampah</option>';
     for (var i = 0; i < list.length; i++) {
         select.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
+    }
+
+    if (selectedValue && list.indexOf(selectedValue) !== -1) {
+        select.value = selectedValue;
     }
     updateHargaOtomatis();
 }
@@ -636,10 +642,17 @@ function setupPengelolaRealtime() {
         console.log('🔄 Auto refresh pengelola dashboard...');
         if (window.syncAllData) {
             window.syncAllData().then(function() {
-                renderPengelola();
+                // Jangan render ulang form saat pengelola sedang mengetik.
+                // renderPengelola() memanggil updateSampahList() dan sebelumnya
+                // menghapus pilihan nama sampah serta harga setiap ada refresh.
+                if (pengelolaTabAktif !== 'input') {
+                    renderPengelola();
+                }
             });
         } else {
-            renderPengelola();
+            if (pengelolaTabAktif !== 'input') {
+                renderPengelola();
+            }
         }
     }
     
