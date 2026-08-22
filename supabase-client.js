@@ -3,16 +3,9 @@
 // KONFIGURASI SUPABASE - LENGKAP
 // =============================================
 
-
-
-// supabase-client.js
-// =============================================
-// KONFIGURASI SUPABASE
-// =============================================
-
-
 const SUPABASE_URL = 'https://hqhzglfmalajunclaulr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_z8PfmkvjRziYDYZ9wWwMIA_CcVWJ4bM';
+
 // Create Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -31,7 +24,6 @@ async function getBSU() {
     }
 }
 
-// ✅ TAMBAHKAN FUNGSI INI (MISSING)
 async function createBSU(bsu) {
     try {
         const { data, error } = await supabase
@@ -46,7 +38,6 @@ async function createBSU(bsu) {
     }
 }
 
-// ✅ TAMBAHKAN FUNGSI INI (MISSING)
 async function updateBSU(id, data) {
     try {
         const { data: result, error } = await supabase
@@ -62,7 +53,6 @@ async function updateBSU(id, data) {
     }
 }
 
-// ✅ TAMBAHKAN FUNGSI INI (MISSING)
 async function deleteBSU(id) {
     try {
         const { error } = await supabase
@@ -77,7 +67,9 @@ async function deleteBSU(id) {
     }
 }
 
+// PERBAIKI: TANPA REKURSI
 async function getBSUById(id) {
+    if (!id) return null;
     try {
         const { data, error } = await supabase
             .from('bsu')
@@ -87,15 +79,20 @@ async function getBSUById(id) {
         if (error) throw error;
         return data;
     } catch (e) {
-        var bsuList = window.dataBSU || [];
-        for (var i = 0; i < bsuList.length; i++) {
-            if (bsuList[i].id === id) return bsuList[i];
+        // Fallback ke data lokal
+        if (window.dataBSU && Array.isArray(window.dataBSU)) {
+            for (var i = 0; i < window.dataBSU.length; i++) {
+                if (window.dataBSU[i].id === id) {
+                    return window.dataBSU[i];
+                }
+            }
         }
         return null;
     }
 }
 
 async function getBSUByUsername(username) {
+    if (!username) return null;
     try {
         const { data, error } = await supabase
             .from('bsu')
@@ -105,9 +102,12 @@ async function getBSUByUsername(username) {
         if (error) throw error;
         return data;
     } catch (e) {
-        var bsuList = window.dataBSU || [];
-        for (var i = 0; i < bsuList.length; i++) {
-            if (bsuList[i].username === username) return bsuList[i];
+        if (window.dataBSU && Array.isArray(window.dataBSU)) {
+            for (var i = 0; i < window.dataBSU.length; i++) {
+                if (window.dataBSU[i].username === username) {
+                    return window.dataBSU[i];
+                }
+            }
         }
         return null;
     }
@@ -129,6 +129,7 @@ async function getNasabah() {
 }
 
 async function getNasabahById(id) {
+    if (!id) return null;
     try {
         const { data, error } = await supabase
             .from('nasabah')
@@ -147,6 +148,7 @@ async function getNasabahById(id) {
 }
 
 async function getNasabahByBSU(bsuId) {
+    if (!bsuId) return [];
     try {
         const { data, error } = await supabase
             .from('nasabah')
@@ -168,6 +170,7 @@ async function getNasabahByBSU(bsuId) {
 }
 
 async function getNasabahByUsername(username) {
+    if (!username) return null;
     try {
         const { data, error } = await supabase
             .from('nasabah')
@@ -259,6 +262,7 @@ async function getTransaksiByStatus(status) {
 }
 
 async function getTransaksiByBSU(bsuId) {
+    if (!bsuId) return [];
     try {
         const { data, error } = await supabase
             .from('transaksi')
@@ -276,6 +280,7 @@ async function getTransaksiByBSU(bsuId) {
 }
 
 async function getTransaksiByNasabah(nasabahId) {
+    if (!nasabahId) return [];
     try {
         const { data, error } = await supabase
             .from('transaksi')
@@ -351,6 +356,7 @@ async function getHargaSampah() {
 }
 
 async function getHargaByNama(nama) {
+    if (!nama) return null;
     try {
         const { data, error } = await supabase
             .from('harga_sampah')
@@ -535,9 +541,9 @@ window.db = {
     getBSU,
     getBSUById,
     getBSUByUsername,
-    createBSU,          // ✅ SEKARANG TERSEDIA
-    updateBSU,          // ✅ SEKARANG TERSEDIA
-    deleteBSU,          // ✅ SEKARANG TERSEDIA
+    createBSU,
+    updateBSU,
+    deleteBSU,
     getNasabah,
     getNasabahById,
     getNasabahByBSU,
@@ -568,16 +574,13 @@ console.log('🔗 Connected to:', SUPABASE_URL);
 // REAL-TIME SUBSCRIPTIONS
 // =============================================
 
-/**
- * Subscribe ke perubahan tabel transaksi
- */
 async function subscribeToTransaksi(callback) {
     const channel = supabase
         .channel('transaksi-changes')
         .on(
             'postgres_changes',
             {
-                event: '*', // INSERT, UPDATE, DELETE
+                event: '*',
                 schema: 'public',
                 table: 'transaksi'
             },
@@ -596,9 +599,6 @@ async function subscribeToTransaksi(callback) {
     return channel;
 }
 
-/**
- * Subscribe ke perubahan tabel nasabah
- */
 async function subscribeToNasabah(callback) {
     const channel = supabase
         .channel('nasabah-changes')
@@ -624,9 +624,6 @@ async function subscribeToNasabah(callback) {
     return channel;
 }
 
-/**
- * Subscribe ke perubahan tabel harga_sampah
- */
 async function subscribeToHargaSampah(callback) {
     const channel = supabase
         .channel('harga-changes')
@@ -652,9 +649,6 @@ async function subscribeToHargaSampah(callback) {
     return channel;
 }
 
-/**
- * Subscribe ke perubahan tabel bsu
- */
 async function subscribeToBSU(callback) {
     const channel = supabase
         .channel('bsu-changes')
@@ -680,9 +674,6 @@ async function subscribeToBSU(callback) {
     return channel;
 }
 
-/**
- * Setup semua real-time subscriptions sekaligus
- */
 async function setupAllRealtime(callbacks) {
     const channels = [];
     
@@ -702,9 +693,6 @@ async function setupAllRealtime(callbacks) {
     return channels;
 }
 
-/**
- * Hapus semua channel
- */
 async function removeAllChannels(channels) {
     if (!channels) return;
     for (const channel of channels) {
@@ -713,7 +701,6 @@ async function removeAllChannels(channels) {
     console.log('📡 All channels removed');
 }
 
-// ---- EXPORT REAL-TIME FUNCTIONS ----
 window.subscribeToTransaksi = subscribeToTransaksi;
 window.subscribeToNasabah = subscribeToNasabah;
 window.subscribeToHargaSampah = subscribeToHargaSampah;
