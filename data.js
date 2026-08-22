@@ -1,9 +1,8 @@
 // data.js
 // =====================================================
-// DATA GLOBAL APLIKASI - DENGAN SUPABASE
+// DATA GLOBAL APLIKASI - REALTIME
 // =====================================================
 
-// Cache data lokal
 window.daftarNasabah = window.daftarNasabah || [];
 window.daftarSampah = window.daftarSampah || [];
 
@@ -23,7 +22,7 @@ async function syncNasabahFromSupabase() {
             const data = await window.db.getNasabah();
             if (data && data.length > 0) {
                 window.daftarNasabah = data;
-                console.log('📥 Synced nasabah from Supabase:', data.length);
+                console.log('📥 Synced nasabah:', data.length);
                 return data;
             }
         }
@@ -39,7 +38,7 @@ async function syncTransaksiFromSupabase() {
             const data = await window.db.getTransaksi();
             if (data && data.length > 0) {
                 window.daftarSampah = data;
-                console.log('📥 Synced transaksi from Supabase:', data.length);
+                console.log('📥 Synced transaksi:', data.length);
                 return data;
             }
         }
@@ -50,14 +49,42 @@ async function syncTransaksiFromSupabase() {
 }
 
 // =============================================
-// FUNGSI CRUD - DENGAN SUPABASE
+// FUNGSI GET BSU BY ID - DIPERBAIKI (TANPA REKURSI)
+// =============================================
+
+function getBSUById(id) {
+    // PERBAIKI: Cek langsung ke dataBSU, tanpa rekursi
+    if (window.dataBSU && Array.isArray(window.dataBSU)) {
+        for (var i = 0; i < window.dataBSU.length; i++) {
+            if (window.dataBSU[i].id === id) {
+                return window.dataBSU[i];
+            }
+        }
+    }
+    
+    // Coba dari db.supabase jika ada
+    if (window.db && window.db.getBSUById) {
+        try {
+            // Gunakan Promise.resolve untuk menghindari rekursi
+            return Promise.resolve(window.db.getBSUById(id));
+        } catch (e) {
+            console.log('⚠️ Gagal get BSU from db:', e.message);
+        }
+    }
+    
+    return null;
+}
+
+// =============================================
+// FUNGSI CRUD - REALTIME
 // =============================================
 
 async function tambahTransaksi(data) {
     console.log('📝 Menyimpan transaksi...', data);
     
-    var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     
+    // PERBAIKI: Panggil getBSUById yang sudah diperbaiki
     var bsu = getBSUById(data.bsuId);
     var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
@@ -94,7 +121,6 @@ async function tambahTransaksi(data) {
             
             // Update cache lokal
             if (!window.daftarSampah) window.daftarSampah = [];
-            // Hapus duplikat jika ada
             var existingIndex = window.daftarSampah.findIndex(function(item) {
                 return item.id === saved.id;
             });
@@ -104,14 +130,12 @@ async function tambahTransaksi(data) {
                 window.daftarSampah.push(saved);
             }
             
-            // Panggil callback jika ada
+            // Panggil callback realtime
             if (window._onTransaksiChange) {
                 window._onTransaksiChange({ eventType: 'INSERT', new: saved });
             }
             
             return saved;
-        } else {
-            console.warn('⚠️ db.createTransaksi tidak tersedia, simpan lokal');
         }
     } catch (e) {
         console.error('❌ Gagal simpan ke Supabase:', e.message);
@@ -136,7 +160,6 @@ async function tambahTransaksi(data) {
 async function updateStatusTransaksi(id, status) {
     console.log('📝 Update status transaksi:', id, '->', status);
     
-    // Update Supabase
     try {
         if (window.db && window.db.updateTransaksi) {
             const updated = await window.db.updateTransaksi(id, { 
@@ -145,7 +168,6 @@ async function updateStatusTransaksi(id, status) {
             });
             console.log('✅ Status transaksi diupdate di Supabase');
             
-            // Update cache lokal
             var data = window.daftarSampah || [];
             for (var i = 0; i < data.length; i++) {
                 if (data[i].id === id) {
@@ -154,13 +176,17 @@ async function updateStatusTransaksi(id, status) {
                     break;
                 }
             }
+            
+            if (window._onTransaksiChange) {
+                window._onTransaksiChange({ eventType: 'UPDATE', new: updated });
+            }
+            
             return updated;
         }
     } catch (e) {
         console.warn('⚠️ Gagal update ke Supabase:', e.message);
     }
     
-    // Fallback ke lokal
     var data = window.daftarSampah || [];
     var updated = null;
     for (var i = 0; i < data.length; i++) {
@@ -174,14 +200,12 @@ async function updateStatusTransaksi(id, status) {
 }
 
 // =============================================
-// FUNGSI QUERY - DENGAN CACHE
+// FUNGSI QUERY
 // =============================================
 
 function getTransaksiByStatus(status) {
     var data = window.daftarSampah || [];
-    return data.filter(function(item) {
-        return item.status === status;
-    });
+    return data.filter(function(item) { return item.status === status; });
 }
 
 function getTransaksiByBSU(bsuId) {
@@ -226,17 +250,6 @@ function getNasabahByUsername(username) {
     return null;
 }
 
-function getBSUById(id) {
-    if (typeof window.getBSUById === 'function') {
-        return window.getBSUById(id);
-    }
-    var data = window.dataBSU || [];
-    for (var i = 0; i < data.length; i++) {
-        if (data[i].id === id) return data[i];
-    }
-    return null;
-}
-
 function hitungSaldoNasabah(nasabahId) {
     var total = 0;
     var data = window.daftarSampah || [];
@@ -276,10 +289,10 @@ window.getTransaksiByNasabah = getTransaksiByNasabah;
 window.getNasabahById = getNasabahById;
 window.getNasabahByBSU = getNasabahByBSU;
 window.getNasabahByUsername = getNasabahByUsername;
-window.getBSUById = getBSUById;
+window.getBSUById = getBSUById;  // ✅ TIDAK OVERRIDE DENGAN REKURSI
 window.tambahTransaksi = tambahTransaksi;
 window.updateStatusTransaksi = updateStatusTransaksi;
 window.hitungSaldoNasabah = hitungSaldoNasabah;
 window.hitungPoinNasabah = hitungPoinNasabah;
 
-console.log('✅ Data module loaded with Supabase support');
+console.log('✅ Data module loaded');

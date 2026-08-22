@@ -1,14 +1,40 @@
 // dashboard-admin.js
 // =====================================================
-// DASHBOARD ADMIN - DENGAN DIAGRAM
+// DASHBOARD ADMIN - REALTIME
 // =====================================================
 
 var adminTabAktif = 'dashboard';
+var adminRealtimeChannels = [];
+var adminRealtimeSetup = false;
+
+// Chart instances
 var statusChartInstance = null;
 var bsuChartInstance = null;
 var trendChartInstance = null;
 
+// =============================================
+// RENDER ADMIN
+// =============================================
+
 function renderAdmin() {
+    console.log('🔄 Render Admin Dashboard');
+    
+    // Sync data dulu
+    if (window.syncAllData) {
+        window.syncAllData().then(function() {
+            renderAllAdmin();
+        });
+    } else {
+        renderAllAdmin();
+    }
+    
+    // Setup realtime
+    if (!adminRealtimeSetup) {
+        setupAdminRealtime();
+    }
+}
+
+function renderAllAdmin() {
     renderVerifikasiAdmin();
     renderHargaSampah();
     renderDataBSU();
@@ -21,7 +47,7 @@ function renderAdmin() {
 }
 
 // =============================================
-// DASHBOARD - DIAGRAM
+// DASHBOARD CHARTS
 // =============================================
 
 function renderDashboardCharts() {
@@ -30,7 +56,6 @@ function renderDashboardCharts() {
     renderTrendChart();
 }
 
-// --- 1. PIE CHART: Status Transaksi ---
 function renderStatusChart() {
     var transaksi = window.daftarSampah || [];
     var diverifikasi = 0, menunggu = 0, ditolak = 0;
@@ -46,9 +71,7 @@ function renderStatusChart() {
     var ctx = document.getElementById('statusChart')?.getContext('2d');
     if (!ctx) return;
     
-    if (statusChartInstance) {
-        statusChartInstance.destroy();
-    }
+    if (statusChartInstance) statusChartInstance.destroy();
     
     statusChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -66,12 +89,7 @@ function renderStatusChart() {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: {
-                        padding: 8,
-                        font: { size: 9 },
-                        boxWidth: 10,
-                        usePointStyle: true
-                    }
+                    labels: { padding: 8, font: { size: 9 }, boxWidth: 10, usePointStyle: true }
                 }
             },
             cutout: '65%'
@@ -79,14 +97,11 @@ function renderStatusChart() {
     });
 }
 
-// --- 2. BAR CHART: Transaksi per BSU ---
 function renderBSUChart() {
     var bsuData = window.dataBSU || [];
-    var labels = [];
-    var values = [];
+    var labels = [], values = [];
     var colors = ['#0d9488', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981', '#6366f1', '#ec4899'];
     
-    // Ambil 8 BSU teratas
     var bsuTransaksi = [];
     for (var i = 0; i < bsuData.length; i++) {
         var bsu = bsuData[i];
@@ -95,10 +110,9 @@ function renderBSUChart() {
         for (var j = 0; j < transaksi.length; j++) {
             if (transaksi[j].status === 'diverifikasi') diverifikasi++;
         }
-        bsuTransaksi.push({
-            nama: bsu.nama,
-            total: diverifikasi
-        });
+        if (diverifikasi > 0) {
+            bsuTransaksi.push({ nama: bsu.nama, total: diverifikasi });
+        }
     }
     
     bsuTransaksi.sort(function(a, b) { return b.total - a.total; });
@@ -114,9 +128,7 @@ function renderBSUChart() {
     var ctx = document.getElementById('bsuChart')?.getContext('2d');
     if (!ctx) return;
     
-    if (bsuChartInstance) {
-        bsuChartInstance.destroy();
-    }
+    if (bsuChartInstance) bsuChartInstance.destroy();
     
     bsuChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -133,37 +145,20 @@ function renderBSUChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        font: { size: 8 },
-                        stepSize: 1
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: { size: 7 }
-                    }
-                }
+                y: { beginAtZero: true, ticks: { font: { size: 8 }, stepSize: 1 } },
+                x: { ticks: { font: { size: 7 } } }
             }
         }
     });
 }
 
-// --- 3. LINE CHART: Trend Bulanan ---
 function renderTrendChart() {
     var transaksi = window.daftarSampah || [];
-    var months = [];
-    var values = [];
+    var months = [], values = [];
     var now = new Date();
     
-    // 6 bulan terakhir
     for (var i = 5; i >= 0; i--) {
         var month = new Date(now.getFullYear(), now.getMonth() - i, 1);
         var monthLabel = month.toLocaleString('id-ID', { month: 'short' });
@@ -176,8 +171,7 @@ function renderTrendChart() {
         for (var j = 0; j < transaksi.length; j++) {
             var item = transaksi[j];
             var itemDate = new Date(item.created_at || item.tanggal || item.createdAt);
-            if (item.status === 'diverifikasi' && 
-                itemDate >= monthStart && itemDate < monthEnd) {
+            if (item.status === 'diverifikasi' && itemDate >= monthStart && itemDate < monthEnd) {
                 count++;
             }
         }
@@ -187,9 +181,7 @@ function renderTrendChart() {
     var ctx = document.getElementById('trendChart')?.getContext('2d');
     if (!ctx) return;
     
-    if (trendChartInstance) {
-        trendChartInstance.destroy();
-    }
+    if (trendChartInstance) trendChartInstance.destroy();
     
     trendChartInstance = new Chart(ctx, {
         type: 'line',
@@ -208,24 +200,10 @@ function renderTrendChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        font: { size: 8 },
-                        stepSize: 1
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: { size: 8 }
-                    }
-                }
+                y: { beginAtZero: true, ticks: { font: { size: 8 }, stepSize: 1 } },
+                x: { ticks: { font: { size: 8 } } }
             }
         }
     });
@@ -246,12 +224,7 @@ function renderTopNasabah() {
         var n = nasabahList[i];
         var saldo = hitungSaldoNasabah(n.id);
         if (saldo > 0) {
-            nasabahData.push({
-                nama: n.nama,
-                saldo: saldo,
-                id: n.id,
-                isManual: n.isManual || false
-            });
+            nasabahData.push({ nama: n.nama, saldo: saldo, id: n.id, isManual: n.isManual || false });
         }
     }
     
@@ -307,9 +280,9 @@ function renderRingkasanJenisSampah() {
         if (item.status !== 'diverifikasi') continue;
         
         var jenis = item.jenis || getKategoriByNamaSampah(item.nama) || 'plastik';
-        if (jenis === 'plastik') totalPlastik += item.berat;
-        else if (jenis === 'logam') totalLogam += item.berat;
-        else if (jenis === 'kertas') totalKertas += item.berat;
+        if (jenis === 'plastik') totalPlastik += item.berat || 0;
+        else if (jenis === 'logam') totalLogam += item.berat || 0;
+        else if (jenis === 'kertas') totalKertas += item.berat || 0;
     }
     
     document.getElementById('statPlastik').textContent = totalPlastik.toFixed(1) + ' kg';
@@ -338,10 +311,6 @@ function renderAdminStatistik() {
     document.getElementById('adminStatDitolak').textContent = ditolak;
     document.getElementById('adminStatTotalNasabah').textContent = totalNasabah;
 }
-
-// =============================================
-// UPDATE ADMIN SUMMARY
-// =============================================
 
 function updateAdminSummary() {
     var totalSaldo = 0;
@@ -372,8 +341,8 @@ function renderVerifikasiAdmin() {
     var html = '';
     for (var i = 0; i < menunggu.length; i++) {
         var item = menunggu[i];
-        var nilai = item.berat * item.hargaPerKg;
-        var nasabah = getNasabahById(item.nasabahId);
+        var nilai = (item.berat || 0) * (item.hargaPerKg || item.harga_per_kg || 0);
+        var nasabah = getNasabahById(item.nasabahId || item.nasabah_id);
         
         html += '<div class="list-item" style="flex-direction:column;align-items:stretch;">';
         html += '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
@@ -387,7 +356,7 @@ function renderVerifikasiAdmin() {
         html += '    </div>';
         html += '    <div style="text-align:right;">';
         html += '      <div style="font-size:11px;font-weight:600;">Rp ' + formatRupiah(nilai) + '</div>';
-        html += '      <div style="font-size:9px;color:#64748b;">' + item.berat + ' kg</div>';
+        html += '      <div style="font-size:9px;color:#64748b;">' + (item.berat || 0) + ' kg</div>';
         html += '    </div>';
         html += '  </div>';
         html += '  <div style="font-size:10px;color:#475569;padding:4px 8px;background:#f1f5f9;border-radius:4px;margin-bottom:6px;">';
@@ -462,14 +431,13 @@ function updateHargaSampah(nama, hargaBaru) {
         return;
     }
     
-    // Update ke Supabase
     if (window.updateHargaSampahSupabase) {
         window.updateHargaSampahSupabase(nama, harga);
     } else {
-        // Fallback lokal
         window.hargaSampahDetail[nama] = harga;
         showToast('Harga ' + nama + ' diupdate menjadi Rp ' + formatRupiah(harga), false);
     }
+    renderHargaSampah();
 }
 
 // =============================================
@@ -485,15 +453,9 @@ function renderDataBSU() {
     var filterRT = document.getElementById('filterRT')?.value || 'all';
     
     var bsuList = dataBSU;
-    if (filterBSU !== 'all') {
-        bsuList = bsuList.filter(function(b) { return b.id === filterBSU; });
-    }
-    if (filterRW !== 'all') {
-        bsuList = bsuList.filter(function(b) { return b.rw === filterRW; });
-    }
-    if (filterRT !== 'all') {
-        bsuList = bsuList.filter(function(b) { return b.rt === filterRT; });
-    }
+    if (filterBSU !== 'all') bsuList = bsuList.filter(function(b) { return b.id === filterBSU; });
+    if (filterRW !== 'all') bsuList = bsuList.filter(function(b) { return b.rw === filterRW; });
+    if (filterRT !== 'all') bsuList = bsuList.filter(function(b) { return b.rt === filterRT; });
     
     updateFilterOptions();
     
@@ -512,8 +474,10 @@ function renderDataBSU() {
         
         for (var j = 0; j < transaksi.length; j++) {
             var t = transaksi[j];
-            totalBerat += t.berat;
-            totalNilai += t.berat * t.hargaPerKg;
+            var harga = t.hargaPerKg || t.harga_per_kg || 0;
+            var berat = t.berat || 0;
+            totalBerat += berat;
+            totalNilai += berat * harga;
             totalTransaksi++;
             if (t.status === 'menunggu') menunggu++;
             else if (t.status === 'diverifikasi') diverifikasi++;
@@ -591,7 +555,7 @@ function renderNasabahAdmin() {
     var nasabahList = daftarNasabah;
     
     if (nasabahList.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada nasabah terdaftar</p><p style="font-size:10px;color:#94a3b8;margin-top:4px;">💡 Silakan daftar akun nasabah terlebih dahulu</p></div>';
+        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada nasabah terdaftar</p></div>';
         return;
     }
     
@@ -630,7 +594,7 @@ function renderNasabahAdmin() {
 }
 
 // =============================================
-// SWITCH TAB - DENGAN BOTTOM NAV AKTIF
+// SWITCH TAB
 // =============================================
 
 function switchAdminTab(tab) {
@@ -644,14 +608,7 @@ function switchAdminTab(tab) {
     var navItems = document.querySelectorAll('.admin-dashboard .bottom-nav .nav-item');
     navItems.forEach(function(item) { item.classList.remove('active'); });
     
-    var navMap = {
-        'dashboard': 0,
-        'verifikasi': 1,
-        'harga': 1,
-        'bsu': 2,
-        'nasabah': 3,
-        'laporan': 4
-    };
+    var navMap = { 'dashboard': 0, 'verifikasi': 1, 'harga': 1, 'bsu': 2, 'nasabah': 3, 'laporan': 4 };
     var index = navMap[tab] || 0;
     if (navItems[index]) navItems[index].classList.add('active');
     
@@ -700,15 +657,10 @@ function exportAdminLaporan(format) {
     var now = new Date();
     var startDate = new Date(now);
     
-    if (periode === 'mingguan') {
-        startDate.setDate(now.getDate() - 7);
-    } else if (periode === 'bulanan') {
-        startDate.setMonth(now.getMonth() - 1);
-    } else if (periode === 'tahunan') {
-        startDate.setFullYear(now.getFullYear() - 1);
-    } else if (periode === 'semua') {
-        startDate = new Date(2000, 0, 1);
-    }
+    if (periode === 'mingguan') startDate.setDate(now.getDate() - 7);
+    else if (periode === 'bulanan') startDate.setMonth(now.getMonth() - 1);
+    else if (periode === 'tahunan') startDate.setFullYear(now.getFullYear() - 1);
+    else if (periode === 'semua') startDate = new Date(2000, 0, 1);
     
     data = data.filter(function(item) {
         var itemDate = new Date(item.created_at || item.tanggal || item.createdAt);
@@ -762,7 +714,7 @@ function exportAdminNasabahRekap() {
     var nasabahMap = {};
     for (var i = 0; i < daftarSampah.length; i++) {
         var item = daftarSampah[i];
-        var nama = item.namaNasabah || '-';
+        var nama = item.namaNasabah || item.nama_nasabah || '-';
         if (nama === '-' || nama === 'undefined' || nama === 'null') continue;
         if (!nasabahMap[nama]) {
             nasabahMap[nama] = {
@@ -775,8 +727,9 @@ function exportAdminNasabahRekap() {
                 rt: item.rt || '-'
             };
         }
-        var nilai = item.berat * item.hargaPerKg;
-        nasabahMap[nama].totalBerat += item.berat;
+        var harga = item.hargaPerKg || item.harga_per_kg || 0;
+        var nilai = (item.berat || 0) * harga;
+        nasabahMap[nama].totalBerat += item.berat || 0;
         nasabahMap[nama].totalNilai += nilai;
         nasabahMap[nama].totalTransaksi++;
     }
@@ -811,14 +764,11 @@ window.exportAdminNasabahRekap = exportAdminNasabahRekap;
 window.updateFilterLaporan = updateFilterLaporan;
 
 console.log('✅ Dashboard Admin loaded with Charts');
-console.log('👤 Total Nasabah terdaftar:', daftarNasabah.length);
+console.log('👤 Total Nasabah:', daftarNasabah.length);
 
 // =============================================
-// REAL-TIME AUTO REFRESH FOR ADMIN
+// REALTIME SETUP
 // =============================================
-
-var adminRealtimeChannels = [];
-var adminRealtimeSetup = false;
 
 function setupAdminRealtime() {
     if (adminRealtimeSetup) return;
@@ -831,11 +781,11 @@ function setupAdminRealtime() {
     function refreshAdmin() {
         console.log('🔄 Auto refresh admin dashboard...');
         if (window.syncAllData) {
-            window.syncAllData().then(() => {
-                renderAdmin();
+            window.syncAllData().then(function() {
+                renderAllAdmin();
             });
         } else {
-            renderAdmin();
+            renderAllAdmin();
         }
     }
     
@@ -845,20 +795,10 @@ function setupAdminRealtime() {
             onNasabahChange: refreshAdmin,
             onHargaChange: refreshAdmin,
             onBSUChange: refreshAdmin
-        }).then(channels => {
+        }).then(function(channels) {
             adminRealtimeChannels = channels;
             adminRealtimeSetup = true;
             console.log('✅ Admin real-time active!');
         });
-    }
-}
-
-// Update fungsi renderAdmin
-function renderAdmin() {
-    // ... kode render yang sudah ada ...
-    
-    // Tambahkan di akhir
-    if (!adminRealtimeSetup) {
-        setupAdminRealtime();
     }
 }

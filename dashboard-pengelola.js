@@ -1,6 +1,6 @@
 // dashboard-pengelola.js
 // =====================================================
-// DASHBOARD PENGELOLA BSU - INPUT MANUAL NASABAH
+// DASHBOARD PENGELOLA BSU - REALTIME
 // =====================================================
 
 var pengelolaAktif = {
@@ -12,6 +12,8 @@ var pengelolaAktif = {
 };
 
 var pengelolaTabAktif = 'dashboard';
+var pengelolaRealtimeChannels = [];
+var pengelolaRealtimeSetup = false;
 
 // =============================================
 // RENDER DASHBOARD PENGELOLA
@@ -21,25 +23,18 @@ function renderPengelola() {
     console.log('🔄 Render Pengelola Dashboard');
     
     var namaEl = document.getElementById('pengelolaNamaBSU');
-    if (namaEl) {
-        namaEl.textContent = '"' + pengelolaAktif.namaBSU + '"';
-    }
+    if (namaEl) namaEl.textContent = '"' + pengelolaAktif.namaBSU + '"';
     
     var ketuaEl = document.getElementById('pengelolaKetua');
-    if (ketuaEl) {
-        ketuaEl.textContent = 'Ketua: ' + pengelolaAktif.ketua;
-    }
+    if (ketuaEl) ketuaEl.textContent = 'Ketua: ' + pengelolaAktif.ketua;
     
     var inputKetuaDisplay = document.getElementById('inputKetuaDisplay');
-    if (inputKetuaDisplay) {
-        inputKetuaDisplay.textContent = pengelolaAktif.ketua;
-    }
+    if (inputKetuaDisplay) inputKetuaDisplay.textContent = pengelolaAktif.ketua;
     
     var inputKetuaHidden = document.getElementById('inputKetua');
-    if (inputKetuaHidden) {
-        inputKetuaHidden.value = pengelolaAktif.ketua;
-    }
+    if (inputKetuaHidden) inputKetuaHidden.value = pengelolaAktif.ketua;
     
+    // Update semua data
     updateSaldoBSU();
     renderStatistik();
     renderRekapTransaksi();
@@ -47,8 +42,12 @@ function renderPengelola() {
     renderNasabahPengelola();
     updateSampahList();
     setupFotoPreview();
-    
     updateBottomNav('dashboard');
+    
+    // Setup realtime jika belum
+    if (!pengelolaRealtimeSetup) {
+        setupPengelolaRealtime();
+    }
 }
 
 // =============================================
@@ -59,21 +58,18 @@ function switchPengelolaTab(tab) {
     pengelolaTabAktif = tab;
     
     var buttons = document.querySelectorAll('.pengelola-dashboard .tab-btn');
-    buttons.forEach(function(btn) { 
-        btn.classList.remove('active'); 
-    });
+    buttons.forEach(function(btn) { btn.classList.remove('active'); });
     var activeBtn = document.querySelector('.tab-btn[data-tab="pengelola-' + tab + '"]');
     if (activeBtn) activeBtn.classList.add('active');
     
     updateBottomNav(tab);
     
     var contents = document.querySelectorAll('.pengelola-dashboard .tab-content');
-    contents.forEach(function(content) { 
-        content.classList.remove('active'); 
-    });
+    contents.forEach(function(content) { content.classList.remove('active'); });
     var activeContent = document.getElementById('pengelola-' + tab);
     if (activeContent) activeContent.classList.add('active');
     
+    // Refresh data sesuai tab
     if (tab === 'dashboard') {
         renderStatistik();
         renderRekapTransaksi();
@@ -97,21 +93,10 @@ function updateBottomNav(activeTab) {
     var navItems = document.querySelectorAll('.pengelola-dashboard .bottom-nav .nav-item');
     var navFab = document.querySelector('.pengelola-dashboard .bottom-nav .nav-fab');
     
-    navItems.forEach(function(item) {
-        item.classList.remove('active');
-    });
-    if (navFab) {
-        navFab.classList.remove('active');
-    }
+    navItems.forEach(function(item) { item.classList.remove('active'); });
+    if (navFab) navFab.classList.remove('active');
     
-    var navMap = {
-        'dashboard': 0,
-        'setoran': 1,
-        'input': 'fab',
-        'nasabah': 2,
-        'laporan': 3
-    };
-    
+    var navMap = { 'dashboard': 0, 'setoran': 1, 'input': 'fab', 'nasabah': 2, 'laporan': 3 };
     var index = navMap[activeTab];
     
     if (index === 'fab') {
@@ -122,70 +107,56 @@ function updateBottomNav(activeTab) {
 }
 
 // =============================================
-// SUBMIT DATA SAMPAH - INPUT MANUAL (DIPERBAIKI)
+// SUBMIT DATA SAMPAH
 // =============================================
 
 function submitDataSampah() {
     console.log('📝 Submit data sampah dimulai...');
     
     try {
-        // Ambil nilai dari form
         var namaNasabahInput = document.getElementById('inputNamaNasabahManual');
         var namaSampahSelect = document.getElementById('inputNamaSampah');
         var jenisSelect = document.getElementById('inputJenis');
         var beratInput = document.getElementById('inputBerat');
         
-        // VALIDASI: Cek elemen ada
+        // Validasi elemen
         if (!namaNasabahInput) {
-            console.error('❌ Element inputNamaNasabahManual tidak ditemukan!');
-            showToast('⚠️ Error form, silakan refresh halaman!', true);
+            showToast('⚠️ Error form, refresh halaman!', true);
             return;
         }
         
-        if (!namaSampahSelect) {
-            console.error('❌ Element inputNamaSampah tidak ditemukan!');
-            showToast('⚠️ Error form, silakan refresh halaman!', true);
-            return;
-        }
-        
-        // Ambil nilai
         var namaNasabah = namaNasabahInput.value.trim();
-        var nama = namaSampahSelect.value;
+        var nama = namaSampahSelect ? namaSampahSelect.value : '';
         var jenis = jenisSelect ? jenisSelect.value : 'plastik';
         var berat = parseFloat(beratInput ? beratInput.value : 0);
         
         console.log('📋 Data form:', { namaNasabah, nama, jenis, berat });
         
-        // VALIDASI
+        // Validasi
         if (!namaNasabah) {
             showToast('⚠️ Masukkan nama nasabah!', true);
             namaNasabahInput.focus();
             return;
         }
-        
         if (!nama) {
             showToast('⚠️ Pilih nama sampah!', true);
             return;
         }
-        
         if (!berat || berat <= 0) {
             showToast('⚠️ Masukkan berat yang valid!', true);
             return;
         }
         
-        // Ambil data pendukung
         var ketuaBSU = document.getElementById('inputKetua')?.value || pengelolaAktif.ketua || 'Ketua BSU';
         var harga = getHargaByNamaSampah(nama);
         var bsu = getBSUById(pengelolaAktif.bsuId);
-        
-        console.log('💰 Harga:', harga, 'Ketua:', ketuaBSU);
         
         // Ambil foto
         var fotoTimbang = document.getElementById('fotoTimbang')?.files[0];
         var fotoHasil = document.getElementById('fotoHasil')?.files[0];
         var fotoBukti = document.getElementById('fotoBukti')?.files[0];
         
-        // Cek apakah nasabah sudah ada
+        // Cek nasabah
         var finalNasabahId = null;
         var existingNasabah = null;
         var nasabahList = window.daftarNasabah || [];
@@ -200,9 +171,7 @@ function submitDataSampah() {
         
         if (existingNasabah) {
             finalNasabahId = existingNasabah.id;
-            console.log('✅ Nasabah ditemukan:', existingNasabah.nama);
         } else {
-            // Buat nasabah baru otomatis
             var newId = 'nasabah_auto_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
             var newNasabah = {
                 id: newId,
@@ -220,17 +189,14 @@ function submitDataSampah() {
                 created_at: new Date().toISOString()
             };
             
-            if (!window.daftarNasabah) {
-                window.daftarNasabah = [];
-            }
+            if (!window.daftarNasabah) window.daftarNasabah = [];
             window.daftarNasabah.push(newNasabah);
             finalNasabahId = newId;
             console.log('✅ Nasabah baru dibuat:', newNasabah.nama);
         }
         
-        // Buat ID transaksi unik
+        // Siapkan data transaksi
         var transId = 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        
         var data = {
             id: transId,
             nama: nama,
@@ -258,41 +224,26 @@ function submitDataSampah() {
         
         console.log('📦 Data transaksi:', data);
         
-        // =============================================
-        // SIMPAN TRANSAKSI - PAKAI FUNGSI GLOBAL
-        // =============================================
-        
-        // Cek apakah fungsi tambahTransaksi tersedia
         if (typeof tambahTransaksi !== 'function') {
-            console.error('❌ Fungsi tambahTransaksi tidak ditemukan!');
-            showToast('⚠️ Error sistem, silakan refresh halaman!', true);
+            showToast('⚠️ Error sistem, refresh halaman!', true);
             return;
         }
         
         showToast('⏳ Menyimpan data...', false);
         
-        // Panggil fungsi tambahTransaksi
+        // SIMPAN TRANSAKSI
         tambahTransaksi(data)
             .then(function(result) {
                 console.log('✅ Transaksi berhasil disimpan:', result);
                 
                 // Reset form
-                var beratInput = document.getElementById('inputBerat');
-                var fotoTimbang = document.getElementById('fotoTimbang');
-                var fotoHasil = document.getElementById('fotoHasil');
-                var fotoBukti = document.getElementById('fotoBukti');
-                var inputHarga = document.getElementById('inputHarga');
-                var inputTotal = document.getElementById('inputTotal');
-                var namaNasabahInput = document.getElementById('inputNamaNasabahManual');
-                
-                if (beratInput) beratInput.value = '';
-                if (fotoTimbang) fotoTimbang.value = '';
-                if (fotoHasil) fotoHasil.value = '';
-                if (fotoBukti) fotoBukti.value = '';
-                if (inputHarga) inputHarga.value = '';
-                if (inputTotal) inputTotal.value = '';
-                if (namaNasabahInput) namaNasabahInput.value = '';
-                
+                document.getElementById('inputBerat').value = '';
+                document.getElementById('fotoTimbang').value = '';
+                document.getElementById('fotoHasil').value = '';
+                document.getElementById('fotoBukti').value = '';
+                document.getElementById('inputHarga').value = '';
+                document.getElementById('inputTotal').value = '';
+                document.getElementById('inputNamaNasabahManual').value = '';
                 document.getElementById('previewTimbang').style.display = 'none';
                 document.getElementById('previewHasil').style.display = 'none';
                 document.getElementById('previewBukti').style.display = 'none';
@@ -312,7 +263,7 @@ function submitDataSampah() {
             });
             
     } catch (error) {
-        console.error('❌ Error pada submitDataSampah:', error);
+        console.error('❌ Error:', error);
         showToast('⚠️ Terjadi kesalahan: ' + error.message, true);
     }
 }
@@ -328,14 +279,12 @@ function setupFotoPreview() {
             previewFoto(e, 'previewTimbang');
         });
     }
-    
     var fotoHasil = document.getElementById('fotoHasil');
     if (fotoHasil) {
         fotoHasil.addEventListener('change', function(e) {
             previewFoto(e, 'previewHasil');
         });
     }
-    
     var fotoBukti = document.getElementById('fotoBukti');
     if (fotoBukti) {
         fotoBukti.addEventListener('change', function(e) {
@@ -370,19 +319,19 @@ function renderStatistik() {
     var transaksi = getTransaksiByBSU(pengelolaAktif.bsuId);
     
     var totalTransaksi = transaksi.length;
-    var totalDiverifikasi = 0;
-    var totalMenunggu = 0;
-    var totalDitolak = 0;
-    var totalBerat = 0;
-    var totalNilai = 0;
+    var totalDiverifikasi = 0, totalMenunggu = 0, totalDitolak = 0;
+    var totalBerat = 0, totalNilai = 0;
     var totalNasabah = getNasabahByBSU(pengelolaAktif.bsuId).length;
     
     for (var i = 0; i < transaksi.length; i++) {
         var t = transaksi[i];
+        var harga = t.hargaPerKg || t.harga_per_kg || 0;
+        var berat = t.berat || 0;
+        
         if (t.status === 'diverifikasi') {
             totalDiverifikasi++;
-            totalBerat += t.berat || 0;
-            totalNilai += (t.berat || 0) * (t.hargaPerKg || t.harga_per_kg || 0);
+            totalBerat += berat;
+            totalNilai += berat * harga;
         } else if (t.status === 'menunggu') {
             totalMenunggu++;
         } else if (t.status === 'ditolak') {
@@ -411,9 +360,7 @@ function renderRekapTransaksi() {
     if (!container) return;
     
     var transaksi = getTransaksiByBSU(pengelolaAktif.bsuId);
-    var diverifikasi = transaksi.filter(function(t) {
-        return t.status === 'diverifikasi';
-    });
+    var diverifikasi = transaksi.filter(function(t) { return t.status === 'diverifikasi'; });
     
     if (diverifikasi.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-check-circle"></i><p>Belum ada transaksi yang diverifikasi</p></div>';
@@ -531,7 +478,7 @@ function renderNasabahPengelola() {
     if (countEl) countEl.textContent = 'Total: ' + nasabah.length;
     
     if (nasabah.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada nasabah terdaftar di BSU ini</p><p style="font-size:10px;color:#94a3b8;margin-top:4px;">💡 Nasabah akan otomatis terdaftar saat input data</p></div>';
+        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada nasabah terdaftar</p><p style="font-size:10px;color:#94a3b8;margin-top:4px;">💡 Nasabah akan otomatis terdaftar saat input data</p></div>';
         return;
     }
     
@@ -578,8 +525,6 @@ function updateSampahList() {
     for (var i = 0; i < list.length; i++) {
         select.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
     }
-    
-    // Trigger update harga
     updateHargaOtomatis();
 }
 
@@ -593,8 +538,7 @@ function updateHargaOtomatis() {
     if (nama) {
         var harga = getHargaByNamaSampah(nama);
         if (hargaEl) hargaEl.value = 'Rp ' + formatRupiah(harga);
-        var total = harga * berat;
-        if (totalEl) totalEl.value = 'Rp ' + formatRupiah(total);
+        if (totalEl) totalEl.value = 'Rp ' + formatRupiah(harga * berat);
     } else {
         if (hargaEl) hargaEl.value = '';
         if (totalEl) totalEl.value = '';
@@ -654,14 +598,10 @@ window.updateBottomNav = updateBottomNav;
 
 console.log('✅ Dashboard Pengelola loaded');
 console.log('🏢 BSU:', pengelolaAktif.namaBSU);
-console.log('👤 Ketua:', pengelolaAktif.ketua);
 
 // =============================================
-// REAL-TIME AUTO REFRESH
+// REALTIME SETUP
 // =============================================
-
-var pengelolaRealtimeChannels = [];
-var pengelolaRealtimeSetup = false;
 
 function setupPengelolaRealtime() {
     if (pengelolaRealtimeSetup) return;
@@ -694,12 +634,3 @@ function setupPengelolaRealtime() {
         });
     }
 }
-
-// Override renderPengelola dengan realtime
-var originalRenderPengelola = renderPengelola;
-renderPengelola = function() {
-    originalRenderPengelola();
-    if (!pengelolaRealtimeSetup) {
-        setupPengelolaRealtime();
-    }
-};
