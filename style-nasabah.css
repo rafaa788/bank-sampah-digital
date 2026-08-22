@@ -1,0 +1,105 @@
+/* style-nasabah.css */
+/* ============================================ */
+/* STYLE KHUSUS NASABAH */
+/* ============================================ */
+
+/* Warna Tab Aktif */
+.nasabah-dashboard .tab-btn.active {
+    background: #0d9488;
+    color: white;
+}
+
+.nasabah-dashboard .tab-btn.active i {
+    color: white;
+}
+
+/* Warna Bottom Nav Aktif */
+.nasabah-dashboard .bottom-nav .nav-item.active {
+    color: #0d9488;
+}
+
+.nasabah-dashboard .bottom-nav .nav-item.active i {
+    color: #0d9488;
+}
+
+/* Statistik Cards */
+.nasabah-dashboard .stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.nasabah-dashboard .stat-card {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.nasabah-dashboard .stat-card .stat-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.nasabah-dashboard .stat-card .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nasabah-dashboard .stat-card .stat-label {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.nasabah-dashboard .stat-card.green .stat-icon { color: #10b981; }
+.nasabah-dashboard .stat-card.blue .stat-icon { color: #3b82f6; }
+.nasabah-dashboard .stat-card.orange .stat-icon { color: #f59e0b; }
+.nasabah-dashboard .stat-card.red .stat-icon { color: #ef4444; }
+.nasabah-dashboard .stat-card.purple .stat-icon { color: #8b5cf6; }
+.nasabah-dashboard .stat-card.teal .stat-icon { color: #14b8a6; }
+
+/* Services Grid */
+.nasabah-dashboard .services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.nasabah-dashboard .service-card {
+    background: white;
+    padding: 14px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    font-size: 11px;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nasabah-dashboard .service-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.nasabah-dashboard .service-card i {
+    font-size: 22px;
+    color: #0d9488;
+}
+
+/* Profile Card */
+.nasabah-dashboard .profile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}

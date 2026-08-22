@@ -75,7 +75,7 @@ async function handleLogin() {
             sessionStorage.setItem('role', 'nasabah');
             sessionStorage.setItem('nasabahId', nasabah.id);
             sessionStorage.setItem('nasabahNama', nasabah.nama);
-            sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id);
+            sessionStorage.setItem('nasabahBsuId', nasabah.bsu_id || nasabah.bsuId);
             showToast('✅ Selamat datang ' + nasabah.nama + '!', false);
             showLoading(false);
             setTimeout(function() {
@@ -90,7 +90,7 @@ async function handleLogin() {
         
     } catch (error) {
         console.error('❌ Error login:', error);
-        showToast('⚠️ Terjadi kesalahan, coba lagi!', true);
+        showToast('⚠️ Terjadi kesalahan: ' + error.message, true);
         showLoading(false);
     }
 }
@@ -236,14 +236,14 @@ function quickLogin(role) {
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginUsername').focus();
-        showToast('🔑 Masukkan username dan password Pengelola', false);
+        showToast('🔑 Masukkan username dan password Pengelola (mede1 / mede123)', false);
         
     } else if (role === 'admin') {
         // ADMIN: TIDAK MENGISI FORM, HANYA FOKUS KE INPUT USERNAME
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginUsername').focus();
-        showToast('🔑 Masukkan username dan password Admin', false);
+        showToast('🔑 Masukkan username dan password Admin (admin / admin123)', false);
     }
 }
 
@@ -301,14 +301,6 @@ function showLoading(show) {
     loading.style.display = show ? 'flex' : 'none';
 }
 
-function cekDataNasabah() {
-    console.log('📋 DATA NASABAH TERDAFTAR:');
-    var data = window.daftarNasabah || [];
-    console.table(data);
-    console.log('Total:', data.length, 'nasabah');
-    return data;
-}
-
 // =============================================
 // EXPORT KE GLOBAL
 // =============================================
@@ -316,8 +308,8 @@ window.handleLogin = handleLogin;
 window.quickLogin = quickLogin;
 window.logoutUser = logoutUser;
 window.checkSession = checkSession;
-window.cekDataNasabah = cekDataNasabah;
 window.showLoading = showLoading;
+window.getOrCreateNasabah = getOrCreateNasabah;
 
 console.log('✅ Login Module loaded');
 console.log('👤 Nasabah: klik tombol Nasabah langsung masuk!');

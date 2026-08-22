@@ -1,0 +1,186 @@
+/* style-admin.css */
+/* ============================================ */
+/* STYLE KHUSUS ADMIN */
+/* ============================================ */
+
+/* Warna Tab Aktif */
+.admin-dashboard .tab-btn.active {
+    background: #1e3a8a;
+    color: white;
+}
+
+.admin-dashboard .tab-btn.active i {
+    color: white;
+}
+
+/* Warna Bottom Nav Aktif */
+.admin-dashboard .bottom-nav .nav-item.active {
+    color: #3b82f6;
+}
+
+.admin-dashboard .bottom-nav .nav-item.active i {
+    color: #3b82f6;
+}
+
+/* Statistik Cards */
+.admin-dashboard .stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.admin-dashboard .stat-card {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.admin-dashboard .stat-card .stat-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.admin-dashboard .stat-card .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.admin-dashboard .stat-card .stat-label {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.admin-dashboard .stat-card.green .stat-icon { color: #10b981; }
+.admin-dashboard .stat-card.blue .stat-icon { color: #3b82f6; }
+.admin-dashboard .stat-card.orange .stat-icon { color: #f59e0b; }
+.admin-dashboard .stat-card.red .stat-icon { color: #ef4444; }
+.admin-dashboard .stat-card.purple .stat-icon { color: #8b5cf6; }
+.admin-dashboard .stat-card.teal .stat-icon { color: #14b8a6; }
+
+/* Chart Container */
+.admin-dashboard .chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.admin-dashboard .chart-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Laporan Section */
+.admin-dashboard .laporan-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.admin-dashboard .laporan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.admin-dashboard .laporan-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.admin-dashboard .laporan-card:hover {
+    border-color: #1e3a8a;
+    background: #eef2ff;
+    transform: translateY(-2px);
+}
+
+.admin-dashboard .laporan-card i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.admin-dashboard .laporan-card .laporan-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.admin-dashboard .laporan-card .laporan-desc {
+    font-size: 8px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.admin-dashboard .laporan-card.excel i { color: #1d6f42; }
+.admin-dashboard .laporan-card.pdf i { color: #dc2626; }
+.admin-dashboard .laporan-card.word i { color: #2563eb; }
+.admin-dashboard .laporan-card.full i { color: #7c3aed; }
+
+.admin-dashboard .laporan-card.excel { border-color: #1d6f42; }
+.admin-dashboard .laporan-card.pdf { border-color: #dc2626; }
+.admin-dashboard .laporan-card.word { border-color: #2563eb; }
+.admin-dashboard .laporan-card.full { border-color: #7c3aed; }
+
+/* Verifikasi */
+.admin-dashboard .btn-verifikasi {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-dashboard .btn-verifikasi.terima {
+    background: #16a34a;
+    color: white;
+}
+
+.admin-dashboard .btn-verifikasi.tolak {
+    background: #dc2626;
+    color: white;
+}
+
+.admin-dashboard .btn-verifikasi.terima:hover {
+    background: #15803d;
+}
+
+.admin-dashboard .btn-verifikasi.tolak:hover {
+    background: #b91c1c;
+}
+
+/* Filter Row */
+.admin-dashboard .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.admin-dashboard .filter-row .form-control {
+    flex: 1;
+    min-width: 70px;
+    padding: 6px 8px;
+    font-size: 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}

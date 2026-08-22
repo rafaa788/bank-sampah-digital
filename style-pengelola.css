@@ -1,0 +1,226 @@
+/* style-pengelola.css */
+/* ============================================ */
+/* STYLE KHUSUS PENGELOLA BSU */
+/* ============================================ */
+
+/* Warna Tab Aktif */
+.pengelola-dashboard .tab-btn.active {
+    background: #15803d;
+    color: white;
+}
+
+.pengelola-dashboard .tab-btn.active i {
+    color: white;
+}
+
+/* Warna Bottom Nav Aktif */
+.pengelola-dashboard .bottom-nav .nav-item.active {
+    color: #15803d;
+}
+
+.pengelola-dashboard .bottom-nav .nav-item.active i {
+    color: #15803d;
+}
+
+/* Warna FAB */
+.pengelola-dashboard .nav-fab {
+    background: #15803d;
+}
+
+.pengelola-dashboard .nav-fab:hover {
+    background: #166534;
+}
+
+.pengelola-dashboard .nav-fab.active {
+    background: #065f46;
+    box-shadow: 0 4px 12px rgba(6, 95, 70, 0.5);
+    transform: scale(1.05);
+}
+
+/* Warna Laporan Card */
+.pengelola-dashboard .laporan-card.excel { border-color: #1d6f42; }
+.pengelola-dashboard .laporan-card.pdf { border-color: #dc2626; }
+.pengelola-dashboard .laporan-card.word { border-color: #2563eb; }
+.pengelola-dashboard .laporan-card.full { border-color: #7c3aed; }
+
+.pengelola-dashboard .laporan-card.excel i { color: #1d6f42; }
+.pengelola-dashboard .laporan-card.pdf i { color: #dc2626; }
+.pengelola-dashboard .laporan-card.word i { color: #2563eb; }
+.pengelola-dashboard .laporan-card.full i { color: #7c3aed; }
+
+/* Input Form */
+.pengelola-dashboard .input-form {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.pengelola-dashboard .input-form .form-group {
+    margin-bottom: 12px;
+}
+
+.pengelola-dashboard .input-form .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.pengelola-dashboard .input-form .form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.pengelola-dashboard .input-form .form-group.half {
+    flex: 1;
+}
+
+.pengelola-dashboard .input-form .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 12px;
+    outline: none;
+    transition: 0.2s;
+    background: white;
+}
+
+.pengelola-dashboard .input-form .form-control:focus {
+    border-color: #15803d;
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+}
+
+.pengelola-dashboard .input-form .form-control[readonly] {
+    background: #f1f5f9;
+}
+
+.pengelola-dashboard .input-form .btn-block {
+    width: 100%;
+    padding: 10px;
+    background: #15803d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.pengelola-dashboard .input-form .btn-block:hover {
+    background: #166534;
+}
+
+/* Preview Foto */
+.pengelola-dashboard .preview-img {
+    display: none;
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 4px;
+    margin-top: 5px;
+}
+
+/* Statistik Cards */
+.pengelola-dashboard .stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.pengelola-dashboard .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.pengelola-dashboard .stat-card {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.pengelola-dashboard .stat-card .stat-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.pengelola-dashboard .stat-card .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.pengelola-dashboard .stat-card .stat-label {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.pengelola-dashboard .stat-card.green .stat-icon { color: #10b981; }
+.pengelola-dashboard .stat-card.blue .stat-icon { color: #3b82f6; }
+.pengelola-dashboard .stat-card.orange .stat-icon { color: #f59e0b; }
+.pengelola-dashboard .stat-card.red .stat-icon { color: #ef4444; }
+.pengelola-dashboard .stat-card.purple .stat-icon { color: #8b5cf6; }
+.pengelola-dashboard .stat-card.teal .stat-icon { color: #14b8a6; }
+
+/* Laporan Section */
+.pengelola-dashboard .laporan-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.pengelola-dashboard .laporan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.pengelola-dashboard .laporan-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pengelola-dashboard .laporan-card:hover {
+    border-color: #15803d;
+    background: #f0fdf4;
+    transform: translateY(-2px);
+}
+
+.pengelola-dashboard .laporan-card i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.pengelola-dashboard .laporan-card .laporan-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pengelola-dashboard .laporan-card .laporan-desc {
+    font-size: 8px;
+    color: #94a3b8;
+    margin-top: 2px;
+}

@@ -14,6 +14,7 @@ async function syncAllData() {
     await syncNasabahFromSupabase();
     await syncTransaksiFromSupabase();
     console.log('✅ All data synced from Supabase');
+    return true;
 }
 
 async function syncNasabahFromSupabase() {
@@ -27,7 +28,7 @@ async function syncNasabahFromSupabase() {
             }
         }
     } catch (e) {
-        console.log('⚠️ Gagal sync nasabah, pakai data lokal');
+        console.log('⚠️ Gagal sync nasabah:', e.message);
     }
     return window.daftarNasabah || [];
 }
@@ -43,17 +44,19 @@ async function syncTransaksiFromSupabase() {
             }
         }
     } catch (e) {
-        console.log('⚠️ Gagal sync transaksi, pakai data lokal');
+        console.log('⚠️ Gagal sync transaksi:', e.message);
     }
     return window.daftarSampah || [];
 }
 
 // =============================================
-// FUNGSI GET BSU BY ID - DIPERBAIKI (TANPA REKURSI)
+// FUNGSI GET BSU BY ID - TANPA REKURSI
 // =============================================
 
 function getBSUById(id) {
-    // PERBAIKI: Cek langsung ke dataBSU, tanpa rekursi
+    if (!id) return null;
+    
+    // 1. Cek di window.dataBSU (data lokal)
     if (window.dataBSU && Array.isArray(window.dataBSU)) {
         for (var i = 0; i < window.dataBSU.length; i++) {
             if (window.dataBSU[i].id === id) {
@@ -62,16 +65,8 @@ function getBSUById(id) {
         }
     }
     
-    // Coba dari db.supabase jika ada
-    if (window.db && window.db.getBSUById) {
-        try {
-            // Gunakan Promise.resolve untuk menghindari rekursi
-            return Promise.resolve(window.db.getBSUById(id));
-        } catch (e) {
-            console.log('⚠️ Gagal get BSU from db:', e.message);
-        }
-    }
-    
+    // 2. Cek di db (async, tapi kita return null dulu)
+    // Ini akan dipanggil async di tempat lain
     return null;
 }
 
@@ -84,20 +79,29 @@ async function tambahTransaksi(data) {
     
     var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     
-    // PERBAIKI: Panggil getBSUById yang sudah diperbaiki
-    var bsu = getBSUById(data.bsuId);
+    // Cari BSU dari data lokal
+    var bsu = null;
+    if (window.dataBSU && Array.isArray(window.dataBSU)) {
+        for (var i = 0; i < window.dataBSU.length; i++) {
+            if (window.dataBSU[i].id === data.bsuId || window.dataBSU[i].id === data.bsu_id) {
+                bsu = window.dataBSU[i];
+                break;
+            }
+        }
+    }
+    
     var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
     var transaksi = {
         id: newId,
-        nama: data.nama,
+        nama: data.nama || 'Sampah',
         jenis: data.jenis || 'nonorganik',
         berat: parseFloat(data.berat) || 0,
         harga_per_kg: data.hargaPerKg || data.harga_per_kg || 2000,
-        bsu: data.bsu || 'BSU',
+        bsu: data.bsu || (bsu ? bsu.nama : 'BSU'),
         bsu_id: data.bsuId || data.bsu_id || 'bsu_mede1',
-        rw: data.rw || 'RW01',
-        rt: data.rt || 'RT01',
+        rw: data.rw || (bsu ? bsu.rw : 'RW01'),
+        rt: data.rt || (bsu ? bsu.rt : 'RT01'),
         ketua: ketuaBSU,
         nama_nasabah: data.namaNasabah || data.nama_nasabah || 'Unknown',
         nasabah_id: data.nasabahId || data.nasabah_id || 'nasabah_unknown',
@@ -127,7 +131,7 @@ async function tambahTransaksi(data) {
             if (existingIndex > -1) {
                 window.daftarSampah[existingIndex] = saved;
             } else {
-                window.daftarSampah.push(saved);
+                window.daftarSampah.unshift(saved);
             }
             
             // Panggil callback realtime
@@ -150,7 +154,7 @@ async function tambahTransaksi(data) {
     if (existingIndex > -1) {
         window.daftarSampah[existingIndex] = transaksi;
     } else {
-        window.daftarSampah.push(transaksi);
+        window.daftarSampah.unshift(transaksi);
     }
     
     console.log('✅ Transaksi tersimpan di lokal (fallback)');
@@ -234,7 +238,9 @@ function getNasabahByBSU(bsuId) {
     var result = [];
     var data = window.daftarNasabah || [];
     for (var i = 0; i < data.length; i++) {
-        if (data[i].bsu_id === bsuId || data[i].bsuId === bsuId) result.push(data[i]);
+        if (data[i].bsu_id === bsuId || data[i].bsuId === bsuId) {
+            result.push(data[i]);
+        }
     }
     return result;
 }
@@ -278,6 +284,26 @@ function hitungPoinNasabah(nasabahId) {
 }
 
 // =============================================
+// DEBUG HELPER
+// =============================================
+
+function cekDataNasabah() {
+    console.log('📋 DATA NASABAH TERDAFTAR:');
+    var data = window.daftarNasabah || [];
+    console.table(data);
+    console.log('Total:', data.length, 'nasabah');
+    return data;
+}
+
+function cekDataTransaksi() {
+    console.log('📋 DATA TRANSAKSI:');
+    var data = window.daftarSampah || [];
+    console.table(data);
+    console.log('Total:', data.length, 'transaksi');
+    return data;
+}
+
+// =============================================
 // EXPORT KE GLOBAL
 // =============================================
 window.syncAllData = syncAllData;
@@ -289,10 +315,16 @@ window.getTransaksiByNasabah = getTransaksiByNasabah;
 window.getNasabahById = getNasabahById;
 window.getNasabahByBSU = getNasabahByBSU;
 window.getNasabahByUsername = getNasabahByUsername;
-window.getBSUById = getBSUById;  // ✅ TIDAK OVERRIDE DENGAN REKURSI
+window.getBSUById = getBSUById;
 window.tambahTransaksi = tambahTransaksi;
 window.updateStatusTransaksi = updateStatusTransaksi;
 window.hitungSaldoNasabah = hitungSaldoNasabah;
 window.hitungPoinNasabah = hitungPoinNasabah;
+window.cekDataNasabah = cekDataNasabah;
+window.cekDataTransaksi = cekDataTransaksi;
 
 console.log('✅ Data module loaded');
+console.log('📋 Data BSU tersedia:', window.dataBSU ? window.dataBSU.length : 0);
+console.log('📋 Data Nasabah tersedia:', window.daftarNasabah ? window.daftarNasabah.length : 0);
+console.log('📋 Data Transaksi tersedia:', window.daftarSampah ? window.daftarSampah.length : 0);
+console.log('💡 Ketik cekDataNasabah() atau cekDataTransaksi() di console untuk debug');
