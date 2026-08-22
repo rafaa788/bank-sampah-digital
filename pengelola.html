@@ -133,24 +133,22 @@
 
 
         <!-- Tab: Input Sampah -->
-        <div id="pengelola-input" class="tab-content">
-            <div class="section-header">
-                <h3>Input Data Sampah</h3>
-                <span style="font-size:9px;color:#64748b;">Ketua: <span id="inputKetuaDisplay">Bapak Slamet</span></span>
-            </div>
-            <div class="input-form">
-      
+<div id="pengelola-input" class="tab-content">
+    <div class="section-header">
+        <h3>Input Data Sampah</h3>
+        <span style="font-size:9px;color:#64748b;">Ketua: <span id="inputKetuaDisplay">Bapak Slamet</span></span>
+    </div>
+    <div class="input-form">
+  
         <input type="hidden" id="inputKetua" value="">
         
+        <!-- GANTI DROPDOWN DENGAN INPUT MANUAL -->
         <div class="form-group">
-            <label for="inputNasabah">Nama Nasabah</label>
-            <select id="inputNasabah" class="form-control">
-                <option value="">✏️ Input Manual (Ketik Nama)</option>
-                <option value="" disabled style="color:#94a3b8;">── Daftar Nasabah ──</option>
-                <option value="" disabled>⚠️ Belum ada nasabah terdaftar</option>
-            </select>
-            <small style="color:#94a3b8;font-size:9px;">💡 Pilih nasabah dari daftar atau kosongkan untuk input manual</small>
+            <label for="inputNamaNasabahManual">Nama Nasabah <span style="color:red;">*</span></label>
+            <input type="text" id="inputNamaNasabahManual" class="form-control" placeholder="Masukkan nama nasabah">
+            <small style="color:#94a3b8;font-size:9px;">💡 Nasabah akan otomatis terdaftar saat data disimpan</small>
         </div>
+        
         <div class="form-group">
             <label>Jenis Sampah</label>
             <select id="inputJenis" class="form-control" onchange="updateSampahList()">
@@ -215,7 +213,6 @@
         </button>
     </div>
 </div>
-
             <!-- Tab: Nasabah -->
             <div id="pengelola-nasabah" class="tab-content">
                 <div class="section-header">

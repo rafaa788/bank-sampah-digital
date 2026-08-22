@@ -8,162 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            max-width: 480px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: modalSlide 0.3s ease;
-        }
-        @keyframes modalSlide {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px 12px;
-            border-bottom: 1px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1;
-            border-radius: 16px 16px 0 0;
-        }
-        .modal-header h3 { font-size: 16px; color: #0d9488; }
-        .modal-header h3 i { margin-right: 8px; }
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #94a3b8;
-            padding: 0 8px;
-        }
-        .modal-close:hover { color: #1e293b; }
-        .modal-body { padding: 16px 20px; }
-        .modal-footer {
-            padding: 12px 20px 16px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            position: sticky;
-            bottom: 0;
-            background: white;
-            border-radius: 0 0 16px 16px;
-        }
-        .modal-footer .btn-primary,
-        .modal-footer .btn-secondary {
-            width: auto;
-            padding: 8px 20px;
-            margin-top: 0;
-        }
-        .modal-footer .btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        .modal-footer .btn-secondary:hover { background: #e2e8f0; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 4px;
-        }
-        .form-group small { display: block; margin-top: 2px; }
-        .form-row { display: flex; gap: 10px; }
-        .form-group.half { flex: 1; }
-        .form-control {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 12px;
-            outline: none;
-            transition: 0.2s;
-        }
-        .form-control:focus {
-            border-color: #0d9488;
-            box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
-        }
-        .form-control[readonly] {
-            background: #f1f5f9;
-            cursor: not-allowed;
-        }
-        textarea.form-control { resize: vertical; min-height: 50px; }
-        .btn-primary {
-            background: #0d9488;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-primary:hover { background: #0f766e; }
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-secondary:hover { background: #e2e8f0; }
-        #daftarSuccess {
-            display: none;
-            background: #dcfce7;
-            color: #15803d;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #86efac;
-        }
-        #daftarError {
-            display: none;
-            background: #fecaca;
-            color: #dc2626;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #f87171;
-        }
         .toast {
             position: fixed;
             bottom: 30px;
@@ -186,6 +30,268 @@
         .toast.error { background: #dc2626; }
         .toast.success { background: #16a34a; }
         .toast.warning { background: #d97706; }
+
+        .login-page {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .login-wrapper {
+            background: white;
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .brand-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .brand-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #10b981, #0d9488);
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+        }
+        .brand-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .brand-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .login-card {
+            background: linear-gradient(180deg, #124e4f 0%, #0d9488 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+        }
+        .login-card h3 {
+            font-size: 15px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .input-group i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #0d9488;
+            font-size: 14px;
+            z-index: 1;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 11px 12px 11px 38px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            outline: none;
+            background: white;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            border: none;
+            background: #042f2e;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary:hover {
+            background: #063f3d;
+        }
+        .btn-secondary {
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            border: none;
+            background: white;
+            color: #0d9488;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-secondary:hover {
+            background: #f0fdf4;
+        }
+        .quick-login {
+            margin-top: 20px;
+        }
+        .quick-label {
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .quick-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .quick-card:hover {
+            border-color: #0d9488;
+            background: #f0fdf4;
+            transform: translateY(-2px);
+        }
+        .quick-card i {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .quick-card span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0f172a;
+            display: block;
+        }
+        .quick-card small {
+            font-size: 9px;
+            color: #94a3b8;
+        }
+        .quick-card.nasabah {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+        .quick-card.nasabah i {
+            color: #15803d;
+        }
+        .quick-card.nasabah span {
+            color: #15803d;
+        }
+        .quick-card.nasabah small {
+            color: #15803d;
+        }
+        .quick-card.pengelola i { color: #2563eb; }
+        .quick-card.admin i { color: #dc2626; }
+        .login-footer {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .account-info {
+            margin-top: 16px;
+        }
+        .account-info details {
+            cursor: pointer;
+        }
+        .account-info summary {
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 0;
+        }
+        .account-info summary:hover {
+            color: #0d9488;
+        }
+        .account-list {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .account-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 11px;
+        }
+        .role-badge {
+            padding: 1px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 8px;
+            text-transform: uppercase;
+            min-width: 50px;
+            text-align: center;
+        }
+        .role-badge.admin { background: #fecaca; color: #dc2626; }
+        .role-badge.pengelola { background: #dbeafe; color: #2563eb; }
+        .role-badge.nasabah { background: #dcfce7; color: #15803d; }
+        .cred {
+            color: #334155;
+            font-family: monospace;
+            font-size: 10px;
+        }
+        #loadingIndicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        #loadingIndicator .loading-box {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        #loadingIndicator .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #0d9488;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        #loadingIndicator .loading-text {
+            font-size: 13px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         .quick-login-hint {
             font-size: 9px;
             color: #94a3b8;
@@ -222,33 +328,29 @@
                 <button class="btn-primary" onclick="handleLogin()" style="width:100%;justify-content:center;padding:11px;">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk
                 </button>
-                
-                <button class="btn-secondary" onclick="bukaModalDaftar()" style="width:100%;justify-content:center;padding:11px;margin-top:8px;">
-                    <i class="fa-solid fa-user-plus"></i> Daftar Akun Baru
-                </button>
             </div>
 
             <div class="quick-login">
-                <p class="quick-label">⚡ Quick Login (Isi Form Otomatis)</p>
+                <p class="quick-label">⚡ Klik untuk Masuk Langsung</p>
                 <div class="quick-grid">
-                    <div class="quick-card" onclick="quickLogin('nasabah')">
+                    <div class="quick-card nasabah" onclick="quickLogin('nasabah')">
                         <i class="fa-solid fa-user"></i>
                         <span>Nasabah</span>
-                        <small>Isi form</small>
+                        <small>Langsung masuk</small>
                     </div>
-                    <div class="quick-card" onclick="quickLogin('pengelola')">
+                    <div class="quick-card pengelola" onclick="quickLogin('pengelola')">
                         <i class="fa-solid fa-building-user"></i>
                         <span>Pengelola</span>
-                        <small>Isi form</small>
+                        <small>Masukkan username & password</small>
                     </div>
-                    <div class="quick-card" onclick="quickLogin('admin')">
+                    <div class="quick-card admin" onclick="quickLogin('admin')">
                         <i class="fa-solid fa-user-gear"></i>
                         <span>Admin</span>
-                        <small>Isi form</small>
+                        <small>Masukkan username & password</small>
                     </div>
                 </div>
                 <p class="quick-login-hint">
-                    ⚠️ Quick Login hanya mengisi form, tetap klik <strong>"Masuk"</strong> untuk login
+                    💡 Nasabah: langsung masuk | Pengelola & Admin: isi username & password manual, lalu klik Masuk
                 </p>
             </div>
 
@@ -264,9 +366,9 @@
                             <span class="role-badge pengelola">BSU</span>
                             <span class="cred">mede1 / mede123</span>
                         </div>
-                        <div class="account-item" style="color:#f59e0b;">
+                        <div class="account-item" style="color:#15803d;">
                             <span class="role-badge nasabah">Nasabah</span>
-                            <span class="cred">⚠️ Daftar akun terlebih dahulu</span>
+                            <span class="cred">✅ Klik tombol "Nasabah" langsung masuk</span>
                         </div>
                     </div>
                 </details>
@@ -278,147 +380,69 @@
         </div>
     </div>
 
-    <!-- Modal Daftar -->
-    <div id="modalDaftar" class="modal-overlay" onclick="if(event.target===this) tutupModalDaftar()">
-        <div class="modal-content" style="max-width:480px;max-height:90vh;overflow-y:auto;">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-user-plus"></i> Daftar Akun Nasabah</h3>
-                <button class="modal-close" onclick="tutupModalDaftar()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="daftarSuccess"></div>
-                <div id="daftarError"></div>
-                <div class="form-group">
-                    <label>Nama Lengkap <span style="color:red;">*</span></label>
-                    <input type="text" id="daftarNama" class="form-control" placeholder="Masukkan nama lengkap">
-                    <small style="color:#94a3b8;font-size:9px;">Nama akan digunakan untuk identifikasi di BSU</small>
-                </div>
-                <div class="form-group">
-                    <label>Username <span style="color:red;">*</span></label>
-                    <input type="text" id="daftarUsername" class="form-control" placeholder="Pilih username unik">
-                    <small style="color:#94a3b8;font-size:9px;">Minimal 3 karakter, huruf/angka/underscore</small>
-                </div>
-                <div class="form-group">
-                    <label>Password <span style="color:red;">*</span></label>
-                    <input type="password" id="daftarPassword" class="form-control" placeholder="Buat password (min 4 karakter)">
-                </div>
-                <div class="form-group">
-                    <label>Konfirmasi Password <span style="color:red;">*</span></label>
-                    <input type="password" id="daftarPasswordConfirm" class="form-control" placeholder="Konfirmasi password">
-                </div>
-                <div class="form-group">
-                    <label>Pilih BSU <span style="color:red;">*</span></label>
-                    <select id="daftarBSU" class="form-control">
-                        <option value="">-- Pilih BSU --</option>
-                    </select>
-                    <small style="color:#94a3b8;font-size:9px;">Pilih BSU tempat Anda akan menabung sampah</small>
-                </div>
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>RW <span style="color:red;">*</span></label>
-                        <input type="text" id="daftarRW" class="form-control" placeholder="Contoh: RW01" readonly>
-                        <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
-                    </div>
-                    <div class="form-group half">
-                        <label>RT <span style="color:red;">*</span></label>
-                        <input type="text" id="daftarRT" class="form-control" placeholder="Contoh: RT01" readonly>
-                        <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Ketua BSU</label>
-                    <input type="text" id="daftarKetua" class="form-control" readonly>
-                    <small style="color:#94a3b8;font-size:9px;">Akan terisi otomatis dari BSU</small>
-                </div>
-                <div class="form-group">
-                    <label>Alamat</label>
-                    <textarea id="daftarAlamat" class="form-control" placeholder="Masukkan alamat lengkap" rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>No. HP</label>
-                    <input type="text" id="daftarNoHP" class="form-control" placeholder="Masukkan nomor HP aktif">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="tutupModalDaftar()">Batal</button>
-                <button class="btn-primary" onclick="daftarNasabah()">
-                    <i class="fa-solid fa-user-plus"></i> Daftar
-                </button>
-            </div>
+    <div id="toast" class="toast"></div>
+    <div id="loadingIndicator">
+        <div class="loading-box">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Memproses...</div>
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
-
-
-<!-- URUTAN SCRIPT -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js"></script>
-<script src="data-bsu.js"></script>
-<script src="data-sampah-list.js"></script>    
-<script src="data-harga.js"></script>         
-<script src="data.js"></script>
-<script src="main.js"></script>
-<script src="laporan.js"></script>
-<script src="login.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', async function() {
-        checkSession();
-        console.log('📋 Jumlah BSU:', window.dataBSU ? window.dataBSU.length : 0);
-        
-        // ===== SYNC DATA DARI SUPABASE =====
-        console.log('🔄 Syncing data from Supabase...');
-        
-        try {
-            // 1. Sync nasabah
-            if (window.syncNasabahFromSupabase) {
-                await window.syncNasabahFromSupabase();
-            }
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="data-bsu.js"></script>
+    <script src="data-sampah-list.js"></script>
+    <script src="data-harga.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="laporan.js"></script>
+    <script src="login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            checkSession();
+            console.log('📋 Jumlah BSU:', window.dataBSU ? window.dataBSU.length : 0);
             
-            // 2. Sync transaksi
-            if (window.syncTransaksiFromSupabase) {
-                await window.syncTransaksiFromSupabase();
-            }
+            console.log('🔄 Syncing data from Supabase...');
             
-            // 3. SYNC HARGA SAMPAH (TAMBAHKAN INI)
-            if (window.syncHargaSampahFromSupabase) {
-                await window.syncHargaSampahFromSupabase();
-            }
-            
-            // 4. SYNC DAFTAR SAMPAH (TAMBAHKAN INI)
-            if (window.syncSampahListFromSupabase) {
-                await window.syncSampahListFromSupabase();
-            }
-            
-            console.log('✅ Data synced successfully');
-            console.log('👤 Total Nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
-            console.log('📄 Total Transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
-            console.log('💰 Total Harga Sampah:', Object.keys(window.hargaSampahDetail || {}).length);
-        } catch (e) {
-            console.warn('⚠️ Gagal sync data:', e.message);
-        }
-        
-        // Seed data awal jika belum ada
-        if (window.db && window.db.seedInitialData) {
             try {
-                await window.db.seedInitialData();
+                if (window.syncNasabahFromSupabase) {
+                    await window.syncNasabahFromSupabase();
+                }
+                if (window.syncTransaksiFromSupabase) {
+                    await window.syncTransaksiFromSupabase();
+                }
+                if (window.syncHargaSampahFromSupabase) {
+                    await window.syncHargaSampahFromSupabase();
+                }
+                if (window.syncSampahListFromSupabase) {
+                    await window.syncSampahListFromSupabase();
+                }
+                console.log('✅ Data synced successfully');
+                console.log('👤 Total Nasabah:', window.daftarNasabah ? window.daftarNasabah.length : 0);
+                console.log('📄 Total Transaksi:', window.daftarSampah ? window.daftarSampah.length : 0);
             } catch (e) {
-                console.log('Seed data skipped or failed');
+                console.warn('⚠️ Gagal sync data:', e.message);
             }
-        }
-        
-        // Seed harga sampah ke Supabase (jika belum ada)
-        if (window.seedHargaSampahToSupabase) {
-            try {
-                await window.seedHargaSampahToSupabase();
-            } catch (e) {
-                console.log('Seed harga skipped or failed');
+            
+            if (window.db && window.db.seedInitialData) {
+                try {
+                    await window.db.seedInitialData();
+                } catch (e) {
+                    console.log('Seed data skipped or failed');
+                }
             }
-        }
-        
-        // Debug helper
-        console.log('💡 Ketik cekDataNasabah() di console untuk melihat data nasabah');
-        console.log('💡 Ketik syncHargaSampahFromSupabase() untuk sync harga');
-    });
-</script>
+            
+            if (window.seedHargaSampahToSupabase) {
+                try {
+                    await window.seedHargaSampahToSupabase();
+                } catch (e) {
+                    console.log('Seed harga skipped or failed');
+                }
+            }
+            
+            console.log('💡 Ketik cekDataNasabah() di console untuk melihat data nasabah');
+        });
+    </script>
+
+</body>
+</html>

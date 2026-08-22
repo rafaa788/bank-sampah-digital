@@ -54,55 +54,88 @@ async function syncTransaksiFromSupabase() {
 // =============================================
 
 async function tambahTransaksi(data) {
-    var newId = 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    console.log('📝 Menyimpan transaksi...', data);
+    
+    var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     
     var bsu = getBSUById(data.bsuId);
-    var ketuaBSU = bsu ? bsu.ketua : 'Ketua BSU';
+    var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
     var transaksi = {
         id: newId,
         nama: data.nama,
         jenis: data.jenis || 'nonorganik',
-        berat: parseFloat(data.berat),
-        harga_per_kg: data.hargaPerKg || 2000,
+        berat: parseFloat(data.berat) || 0,
+        harga_per_kg: data.hargaPerKg || data.harga_per_kg || 2000,
         bsu: data.bsu || 'BSU',
-        bsu_id: data.bsuId || 'bsu_mede1',
+        bsu_id: data.bsuId || data.bsu_id || 'bsu_mede1',
         rw: data.rw || 'RW01',
         rt: data.rt || 'RT01',
         ketua: ketuaBSU,
-        nama_nasabah: data.namaNasabah || 'Unknown',
-        nasabah_id: data.nasabahId || 'nasabah_sarah',
+        nama_nasabah: data.namaNasabah || data.nama_nasabah || 'Unknown',
+        nasabah_id: data.nasabahId || data.nasabah_id || 'nasabah_unknown',
         status: data.status || 'menunggu',
-        tanggal: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
+        tanggal: data.tanggal || new Date().toISOString().split('T')[0],
+        created_at: data.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
         foto_timbang: data.foto_timbang || null,
         foto_hasil: data.foto_hasil || null,
         foto_bukti: data.foto_bukti || null
     };
     
+    console.log('📦 Transaksi object:', transaksi);
+    
     // Simpan ke Supabase
     try {
         if (window.db && window.db.createTransaksi) {
+            console.log('💾 Menyimpan ke Supabase...');
             const saved = await window.db.createTransaksi(transaksi);
             console.log('✅ Transaksi tersimpan di Supabase:', saved);
             
             // Update cache lokal
             if (!window.daftarSampah) window.daftarSampah = [];
-            window.daftarSampah.push(saved);
+            // Hapus duplikat jika ada
+            var existingIndex = window.daftarSampah.findIndex(function(item) {
+                return item.id === saved.id;
+            });
+            if (existingIndex > -1) {
+                window.daftarSampah[existingIndex] = saved;
+            } else {
+                window.daftarSampah.push(saved);
+            }
+            
+            // Panggil callback jika ada
+            if (window._onTransaksiChange) {
+                window._onTransaksiChange({ eventType: 'INSERT', new: saved });
+            }
+            
             return saved;
+        } else {
+            console.warn('⚠️ db.createTransaksi tidak tersedia, simpan lokal');
         }
     } catch (e) {
-        console.warn('⚠️ Gagal simpan ke Supabase, pakai lokal:', e.message);
+        console.error('❌ Gagal simpan ke Supabase:', e.message);
+        console.log('💾 Menyimpan ke lokal sebagai fallback...');
     }
     
     // Fallback ke lokal
     if (!window.daftarSampah) window.daftarSampah = [];
-    window.daftarSampah.push(transaksi);
+    var existingIndex = window.daftarSampah.findIndex(function(item) {
+        return item.id === transaksi.id;
+    });
+    if (existingIndex > -1) {
+        window.daftarSampah[existingIndex] = transaksi;
+    } else {
+        window.daftarSampah.push(transaksi);
+    }
+    
+    console.log('✅ Transaksi tersimpan di lokal (fallback)');
     return transaksi;
 }
 
 async function updateStatusTransaksi(id, status) {
+    console.log('📝 Update status transaksi:', id, '->', status);
+    
     // Update Supabase
     try {
         if (window.db && window.db.updateTransaksi) {
@@ -124,7 +157,7 @@ async function updateStatusTransaksi(id, status) {
             return updated;
         }
     } catch (e) {
-        console.warn('⚠️ Gagal update ke Supabase, pakai lokal:', e.message);
+        console.warn('⚠️ Gagal update ke Supabase:', e.message);
     }
     
     // Fallback ke lokal
