@@ -81,6 +81,7 @@
                 </button>
             </div>
 
+            <!-- TAB DASHBOARD -->
             <div id="admin-dashboard" class="tab-content active">
                 <div class="chart-container">
                     <div class="chart-title">
@@ -146,6 +147,7 @@
                 </div>
             </div>
 
+            <!-- TAB Verifikasi -->
             <div id="admin-verifikasi" class="tab-content">
                 <div class="section-header">
                     <h3>Verifikasi Data Sampah</h3>
@@ -159,6 +161,7 @@
                 </div>
             </div>
 
+            <!-- TAB Harga -->
             <div id="admin-harga" class="tab-content">
                 <div class="section-header">
                     <h3>Atur Data Harga Sampah</h3>
@@ -179,6 +182,7 @@
                 </div>
             </div>
 
+            <!-- TAB BSU -->
             <div id="admin-bsu" class="tab-content">
                 <div class="section-header">
                     <h3>Data BSU</h3>
@@ -202,6 +206,7 @@
                 </div>
             </div>
 
+            <!-- TAB Nasabah -->
             <div id="admin-nasabah" class="tab-content">
                 <div class="section-header">
                     <h3>Data Nasabah</h3>
@@ -217,6 +222,7 @@
                 </div>
             </div>
 
+            <!-- TAB Laporan -->
             <div id="admin-laporan" class="tab-content">
                 <div class="section-header">
                     <h3><i class="fa-solid fa-file-lines"></i> Ekspor Laporan</h3>
@@ -299,6 +305,15 @@
             syncAllData().then(function() {
                 renderAdmin();
             });
+            
+            // Auto refresh setiap 10 detik
+            setInterval(function() {
+                syncAllData().then(function() {
+                    if (document.querySelector('.admin-dashboard')) {
+                        renderAdmin();
+                    }
+                });
+            }, 10000);
         });
     </script>
 

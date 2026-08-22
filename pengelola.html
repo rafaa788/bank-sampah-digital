@@ -334,6 +334,15 @@
             
             var ketua = sessionStorage.getItem('bsuKetua') || 'Ketua BSU';
             document.getElementById('inputKetuaDisplay').textContent = ketua;
+            
+            // Auto refresh setiap 10 detik
+            setInterval(function() {
+                syncAllData().then(function() {
+                    if (document.querySelector('.pengelola-dashboard')) {
+                        renderPengelola();
+                    }
+                });
+            }, 10000);
         });
     </script>
 

@@ -300,6 +300,8 @@ async function tambahTransaksi(data) {
     var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     
     var bsu = getBSUById(data.bsuId) || getBSUById(data.bsu_id);
+    console.log('🔍 BSU ditemukan:', bsu ? bsu.nama : 'TIDAK DITEMUKAN');
+    
     var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
     var transaksi = {
@@ -324,8 +326,11 @@ async function tambahTransaksi(data) {
         foto_bukti: data.foto_bukti || null
     };
     
+    console.log('📦 Transaksi object:', transaksi);
+    
     try {
         if (window.db && window.db.createTransaksi) {
+            console.log('💾 Menyimpan ke Supabase...');
             const saved = await window.db.createTransaksi(transaksi);
             if (saved) {
                 console.log('✅ Transaksi tersimpan di Supabase:', saved);
@@ -334,16 +339,19 @@ async function tambahTransaksi(data) {
                     window._onTransaksiChange({ eventType: 'INSERT', new: saved });
                 }
                 return saved;
+            } else {
+                console.error('❌ createTransaksi mengembalikan null');
+                throw new Error('Gagal menyimpan ke Supabase');
             }
+        } else {
+            console.error('❌ window.db.createTransaksi tidak tersedia!');
+            throw new Error('Database tidak tersedia');
         }
     } catch (e) {
         console.error('❌ Gagal simpan ke Supabase:', e.message);
         showToast('⚠️ Gagal menyimpan: ' + e.message, true);
+        throw e;
     }
-    
-    // Fallback
-    window.daftarSampah.unshift(transaksi);
-    return transaksi;
 }
 
 async function updateStatusTransaksi(id, status) {
@@ -406,7 +414,7 @@ async function updateHargaSampah(nama, hargaBaru) {
 }
 
 // =============================================
-// CREATE NASABAH OTOMATIS
+// CREATE NASABAH OTOMATIS KE SUPABASE
 // =============================================
 
 async function createNasabahOtomatis(username, password, nama) {

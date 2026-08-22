@@ -766,9 +766,10 @@ window.updateFilterLaporan = updateFilterLaporan;
 console.log('✅ Dashboard Admin loaded with Charts');
 console.log('👤 Total Nasabah:', daftarNasabah.length);
 
-// =============================================
-// REALTIME SETUP
-// =============================================
+// dashboard-admin.js - TAMBAHKAN INI DI AKHIR FILE
+// =====================================================
+// AUTO REFRESH SETUP
+// =====================================================
 
 function setupAdminRealtime() {
     if (adminRealtimeSetup) return;
@@ -802,3 +803,14 @@ function setupAdminRealtime() {
         });
     }
 }
+
+// Auto refresh setiap 10 detik (fallback)
+setInterval(function() {
+    if (window.syncAllData) {
+        window.syncAllData().then(function() {
+            if (document.querySelector('.admin-dashboard')) {
+                renderAllAdmin();
+            }
+        });
+    }
+}, 10000);

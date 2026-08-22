@@ -624,3 +624,19 @@ function renderNasabah() {
         setupNasabahRealtime();
     }
 }
+
+// dashboard-nasabah.js - TAMBAHKAN INI DI AKHIR FILE
+// =====================================================
+// AUTO REFRESH SETUP
+// =====================================================
+
+// Auto refresh setiap 10 detik untuk nasabah
+setInterval(function() {
+    if (window.syncAllData && nasabahAktif) {
+        window.syncAllData().then(function() {
+            if (document.querySelector('.nasabah-dashboard')) {
+                renderNasabah();
+            }
+        });
+    }
+}, 10000);

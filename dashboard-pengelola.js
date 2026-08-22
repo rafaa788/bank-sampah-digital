@@ -107,10 +107,10 @@ function updateBottomNav(activeTab) {
 }
 
 // =============================================
-// SUBMIT DATA SAMPAH
+// SUBMIT DATA SAMPAH - PERBAIKAN TOTAL
 // =============================================
 
-function submitDataSampah() {
+async function submitDataSampah() {
     console.log('📝 Submit data sampah dimulai...');
     
     try {
@@ -119,7 +119,6 @@ function submitDataSampah() {
         var jenisSelect = document.getElementById('inputJenis');
         var beratInput = document.getElementById('inputBerat');
         
-        // Validasi elemen
         if (!namaNasabahInput) {
             showToast('⚠️ Error form, refresh halaman!', true);
             return;
@@ -156,14 +155,14 @@ function submitDataSampah() {
         var fotoHasil = document.getElementById('fotoHasil')?.files[0];
         var fotoBukti = document.getElementById('fotoBukti')?.files[0];
         
-        // Cek nasabah
+        // ===== CEK NASABAH =====
         var finalNasabahId = null;
         var existingNasabah = null;
         var nasabahList = window.daftarNasabah || [];
         
         for (var i = 0; i < nasabahList.length; i++) {
             if (nasabahList[i].nama && nasabahList[i].nama.toLowerCase() === namaNasabah.toLowerCase() && 
-                nasabahList[i].bsuId === pengelolaAktif.bsuId) {
+                (nasabahList[i].bsu_id === pengelolaAktif.bsuId || nasabahList[i].bsuId === pengelolaAktif.bsuId)) {
                 existingNasabah = nasabahList[i];
                 break;
             }
@@ -171,31 +170,52 @@ function submitDataSampah() {
         
         if (existingNasabah) {
             finalNasabahId = existingNasabah.id;
+            console.log('✅ Nasabah ditemukan:', existingNasabah.nama);
         } else {
-            var newId = 'nasabah_auto_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            // === BUAT NASABAH BARU DI SUPABASE ===
+            var newId = 'nasabah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
             var newNasabah = {
                 id: newId,
                 nama: namaNasabah,
                 username: 'auto_' + Date.now(),
-                password: 'auto',
-                bsuId: pengelolaAktif.bsuId,
+                password: 'auto_' + Math.random().toString(36).substr(2, 4),
                 bsu_id: pengelolaAktif.bsuId,
                 rw: bsu ? bsu.rw : pengelolaAktif.rw,
                 rt: bsu ? bsu.rt : pengelolaAktif.rt,
                 alamat: '',
-                noHp: '',
                 no_hp: '',
-                isManual: true,
+                is_manual: true,
                 created_at: new Date().toISOString()
             };
             
-            if (!window.daftarNasabah) window.daftarNasabah = [];
-            window.daftarNasabah.push(newNasabah);
-            finalNasabahId = newId;
-            console.log('✅ Nasabah baru dibuat:', newNasabah.nama);
+            try {
+                // SIMPAN KE SUPABASE
+                if (window.db && window.db.createNasabah) {
+                    console.log('💾 Menyimpan nasabah ke Supabase...');
+                    const saved = await window.db.createNasabah(newNasabah);
+                    if (saved) {
+                        console.log('✅ Nasabah tersimpan di Supabase:', saved);
+                        if (!window.daftarNasabah) window.daftarNasabah = [];
+                        window.daftarNasabah.push(saved);
+                        finalNasabahId = saved.id;
+                    } else {
+                        throw new Error('Gagal menyimpan nasabah');
+                    }
+                } else {
+                    // Fallback lokal
+                    console.warn('⚠️ db.createNasabah tidak tersedia, simpan lokal');
+                    if (!window.daftarNasabah) window.daftarNasabah = [];
+                    window.daftarNasabah.push(newNasabah);
+                    finalNasabahId = newId;
+                }
+            } catch (error) {
+                console.error('❌ Gagal buat nasabah:', error);
+                showToast('⚠️ Gagal membuat nasabah: ' + error.message, true);
+                return;
+            }
         }
         
-        // Siapkan data transaksi
+        // ===== BUAT TRANSAKSI =====
         var transId = 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
         var data = {
             id: transId,
@@ -231,36 +251,37 @@ function submitDataSampah() {
         
         showToast('⏳ Menyimpan data...', false);
         
-        // SIMPAN TRANSAKSI
-        tambahTransaksi(data)
-            .then(function(result) {
-                console.log('✅ Transaksi berhasil disimpan:', result);
-                
-                // Reset form
-                document.getElementById('inputBerat').value = '';
-                document.getElementById('fotoTimbang').value = '';
-                document.getElementById('fotoHasil').value = '';
-                document.getElementById('fotoBukti').value = '';
-                document.getElementById('inputHarga').value = '';
-                document.getElementById('inputTotal').value = '';
-                document.getElementById('inputNamaNasabahManual').value = '';
-                document.getElementById('previewTimbang').style.display = 'none';
-                document.getElementById('previewHasil').style.display = 'none';
-                document.getElementById('previewBukti').style.display = 'none';
-                
-                showToast('✅ Data sampah berhasil disimpan! Menunggu verifikasi Admin.', false);
-                
-                // Refresh semua data
-                renderSetoranPengelola();
-                updateSaldoBSU();
-                renderNasabahPengelola();
-                renderStatistik();
-                renderRekapTransaksi();
-            })
-            .catch(function(error) {
-                console.error('❌ Gagal menyimpan transaksi:', error);
-                showToast('⚠️ Gagal menyimpan data: ' + (error.message || 'Unknown error'), true);
-            });
+        // ===== SIMPAN TRANSAKSI =====
+        try {
+            const result = await tambahTransaksi(data);
+            console.log('✅ Transaksi berhasil disimpan:', result);
+            
+            // Reset form
+            document.getElementById('inputBerat').value = '';
+            document.getElementById('fotoTimbang').value = '';
+            document.getElementById('fotoHasil').value = '';
+            document.getElementById('fotoBukti').value = '';
+            document.getElementById('inputHarga').value = '';
+            document.getElementById('inputTotal').value = '';
+            document.getElementById('inputNamaNasabahManual').value = '';
+            document.getElementById('previewTimbang').style.display = 'none';
+            document.getElementById('previewHasil').style.display = 'none';
+            document.getElementById('previewBukti').style.display = 'none';
+            
+            showToast('✅ Data sampah berhasil disimpan! Menunggu verifikasi Admin.', false);
+            
+            // Refresh semua data
+            await syncAllData();
+            renderSetoranPengelola();
+            updateSaldoBSU();
+            renderNasabahPengelola();
+            renderStatistik();
+            renderRekapTransaksi();
+            
+        } catch (error) {
+            console.error('❌ Gagal menyimpan transaksi:', error);
+            showToast('⚠️ Gagal menyimpan data: ' + (error.message || 'Unknown error'), true);
+        }
             
     } catch (error) {
         console.error('❌ Error:', error);

@@ -245,6 +245,15 @@
             syncAllData().then(function() {
                 renderNasabah();
             });
+            
+            // Auto refresh setiap 10 detik
+            setInterval(function() {
+                syncAllData().then(function() {
+                    if (document.querySelector('.nasabah-dashboard')) {
+                        renderNasabah();
+                    }
+                });
+            }, 10000);
         });
 
         function switchNasabahTab(tab) {
