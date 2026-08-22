@@ -328,28 +328,39 @@ function renderVerifikasiAdmin() {
     var container = document.getElementById('adminVerifikasiList');
     if (!container) return;
     
-    var menunggu = getTransaksiByStatus('menunggu');
+    var semuaTransaksi = window.daftarSampah || [];
+    var menunggu = semuaTransaksi.filter(function(item) {
+        return item.status === 'menunggu';
+    });
+    var statusFilter = document.getElementById('adminStatusFilter')?.value || 'menunggu';
+    var daftarTampil = statusFilter === 'all' ? semuaTransaksi : semuaTransaksi.filter(function(item) {
+        return item.status === statusFilter;
+    });
     
     var countEl = document.getElementById('adminVerifikasiCount');
     if (countEl) countEl.textContent = 'Menunggu: ' + menunggu.length;
     
-    if (menunggu.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-check-circle"></i><p>Tidak ada data menunggu verifikasi</p></div>';
+    if (daftarTampil.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Tidak ada data pada status ini</p></div>';
         return;
     }
     
     var html = '';
-    for (var i = 0; i < menunggu.length; i++) {
-        var item = menunggu[i];
+    for (var i = 0; i < daftarTampil.length; i++) {
+        var item = daftarTampil[i];
         var nilai = (item.berat || 0) * (item.hargaPerKg || item.harga_per_kg || 0);
         var nasabah = getNasabahById(item.nasabahId || item.nasabah_id);
+        var statusLabel = item.status === 'diverifikasi' ? 'Diterima' :
+            (item.status === 'ditolak' ? 'Ditolak' : 'Menunggu');
+        var statusClass = item.status === 'diverifikasi' ? 'badge-success' :
+            (item.status === 'ditolak' ? 'badge-danger' : 'badge-pending');
         
         html += '<div class="list-item" style="flex-direction:column;align-items:stretch;">';
         html += '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
         html += '    <div class="list-left">';
         html += '      <div class="avatar" style="width:28px;height:28px;font-size:10px;">' + (nasabah ? nasabah.nama.charAt(0) : '?') + '</div>';
         html += '      <div>';
-        html += '        <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : 'Unknown') + '</div>';
+        html += '        <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : (item.nama_nasabah || 'Unknown')) + '</div>';
         html += '        <div style="font-size:9px;color:#64748b;">' + (item.bsu || '-') + ' | ' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</div>';
         html += '        <div style="font-size:8px;color:#94a3b8;">Ketua: ' + (item.ketua || '-') + '</div>';
         html += '      </div>';
@@ -361,10 +372,22 @@ function renderVerifikasiAdmin() {
         html += '  </div>';
         html += '  <div style="font-size:10px;color:#475569;padding:4px 8px;background:#f1f5f9;border-radius:4px;margin-bottom:6px;">';
         html += '    <strong>Sampah:</strong> ' + (item.nama || '-');
+        html += '    <br><strong>Harga:</strong> Rp ' + formatRupiah(item.hargaPerKg || item.harga_per_kg || 0) + '/kg';
+        html += '    <br><strong>Total:</strong> Rp ' + formatRupiah(nilai) + ' | <strong>Tanggal:</strong> ' + (item.tanggal || '-');
         html += '  </div>';
-        html += '  <div style="display:flex;gap:6px;justify-content:flex-end;">';
-        html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')"><i class="fa-solid fa-check"></i> Terima</button>';
-        html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')"><i class="fa-solid fa-xmark"></i> Tolak</button>';
+        if (item.foto_timbang || item.foto_hasil || item.foto_bukti) {
+            html += '  <div style="display:flex;gap:5px;margin-bottom:6px;">';
+            ['foto_timbang', 'foto_hasil', 'foto_bukti'].forEach(function(key) {
+                if (item[key]) html += '<img src="' + item[key] + '" alt="' + key + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px;">';
+            });
+            html += '  </div>';
+        }
+        html += '  <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">';
+        html += '    <span class="badge ' + statusClass + '">' + statusLabel + '</span>';
+        if (item.status === 'menunggu') {
+            html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')"><i class="fa-solid fa-check"></i> Terima</button>';
+            html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')"><i class="fa-solid fa-xmark"></i> Tolak</button>';
+        }
         html += '  </div>';
         html += '</div>';
     }
@@ -372,10 +395,12 @@ function renderVerifikasiAdmin() {
     container.innerHTML = html;
 }
 
-function verifikasiSampah(id, status) {
-    var item = updateStatusTransaksi(id, status);
-    if (item) {
-        showToast('Data sampah ' + (status === 'diverifikasi' ? 'diverifikasi' : 'ditolak'), false);
+async function verifikasiSampah(id, status) {
+    try {
+        var item = await updateStatusTransaksi(id, status);
+        if (item) {
+            await syncAllData();
+            showToast('Data sampah ' + (status === 'diverifikasi' ? 'diterima' : 'ditolak'), false);
         renderVerifikasiAdmin();
         renderDataBSU();
         renderNasabahAdmin();
@@ -384,6 +409,9 @@ function verifikasiSampah(id, status) {
         renderDashboardCharts();
         renderTopNasabah();
         renderRingkasanJenisSampah();
+        }
+    } catch (error) {
+        showToast('Gagal memperbarui status: ' + error.message, true);
     }
 }
 
@@ -397,7 +425,7 @@ function renderHargaSampah() {
     
     var jenis = document.getElementById('hargaFilterJenis')?.value || 'plastik';
     var search = document.getElementById('hargaSearch')?.value?.toLowerCase() || '';
-    var list = presetSampah[jenis] || [];
+    var list = (window.presetSampah && window.presetSampah[jenis]) || [];
     
     var html = '';
     var count = 0;
