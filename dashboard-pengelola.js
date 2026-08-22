@@ -110,6 +110,33 @@ function updateBottomNav(activeTab) {
 // SUBMIT DATA SAMPAH - PERBAIKAN TOTAL
 // =============================================
 
+function fileToDataUrl(file) {
+    return new Promise(function(resolve, reject) {
+        if (!file) {
+            resolve(null);
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function() {
+            var image = new Image();
+            image.onload = function() {
+                var maxSize = 1200;
+                var scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+                var canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.75));
+            };
+            image.onerror = reject;
+            image.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 async function submitDataSampah() {
     console.log('📝 Submit data sampah dimulai...');
     
@@ -154,6 +181,14 @@ async function submitDataSampah() {
         var fotoTimbang = document.getElementById('fotoTimbang')?.files[0];
         var fotoHasil = document.getElementById('fotoHasil')?.files[0];
         var fotoBukti = document.getElementById('fotoBukti')?.files[0];
+
+        // Object URL hanya berlaku di tab ini dan hilang setelah refresh.
+        // Simpan versi terkompresi agar foto tetap dapat dibaca semua akun.
+        var fotoUrls = await Promise.all([
+            fileToDataUrl(fotoTimbang),
+            fileToDataUrl(fotoHasil),
+            fileToDataUrl(fotoBukti)
+        ]);
         
         // ===== CEK NASABAH =====
         var finalNasabahId = null;
@@ -237,9 +272,9 @@ async function submitDataSampah() {
             status: 'menunggu',
             tanggal: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
-            foto_timbang: fotoTimbang ? URL.createObjectURL(fotoTimbang) : null,
-            foto_hasil: fotoHasil ? URL.createObjectURL(fotoHasil) : null,
-            foto_bukti: fotoBukti ? URL.createObjectURL(fotoBukti) : null
+            foto_timbang: fotoUrls[0],
+            foto_hasil: fotoUrls[1],
+            foto_bukti: fotoUrls[2]
         };
         
         console.log('📦 Data transaksi:', data);
