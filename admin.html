@@ -153,6 +153,14 @@
                     <h3>Verifikasi Data Sampah</h3>
                     <span class="badge-count" id="adminVerifikasiCount">Menunggu: 0</span>
                 </div>
+                <div class="filter-row" style="margin-bottom:8px;">
+                    <select id="adminStatusFilter" class="form-control" onchange="renderVerifikasiAdmin()">
+                        <option value="menunggu">Menunggu Verifikasi</option>
+                        <option value="diverifikasi">Diterima</option>
+                        <option value="ditolak">Ditolak</option>
+                        <option value="all">Semua Data</option>
+                    </select>
+                </div>
                 <div id="adminVerifikasiList">
                     <div class="empty-state">
                         <i class="fa-solid fa-check-circle"></i>
