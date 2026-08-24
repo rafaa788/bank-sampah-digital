@@ -339,7 +339,11 @@
             setInterval(function() {
                 syncAllData().then(function() {
                     if (document.querySelector('.pengelola-dashboard')) {
-                        renderPengelola();
+                        // Form input tidak boleh dirender ulang ketika sedang dipakai.
+                        // Refresh sebelumnya mengosongkan nama sampah dan harga setiap 10 detik.
+                        if (typeof pengelolaTabAktif === 'undefined' || pengelolaTabAktif !== 'input') {
+                            renderPengelola();
+                        }
                     }
                 });
             }, 10000);
