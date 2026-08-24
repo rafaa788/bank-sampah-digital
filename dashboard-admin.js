@@ -1,6 +1,7 @@
 // dashboard-admin.js
 // =====================================================
-// DASHBOARD ADMIN - REALTIME
+// DASHBOARD ADMIN - REALTIME DENGAN FOTO VERIFIKASI
+// RESPONSIF HP - FOTO BISA DIKLIK UNTUK DIPERBESAR
 // =====================================================
 
 var adminTabAktif = 'dashboard';
@@ -19,7 +20,6 @@ var trendChartInstance = null;
 function renderAdmin() {
     console.log('🔄 Render Admin Dashboard');
     
-    // Sync data dulu
     if (window.syncAllData) {
         window.syncAllData().then(function() {
             renderAllAdmin();
@@ -28,7 +28,6 @@ function renderAdmin() {
         renderAllAdmin();
     }
     
-    // Setup realtime
     if (!adminRealtimeSetup) {
         setupAdminRealtime();
     }
@@ -314,21 +313,29 @@ function renderAdminStatistik() {
 
 function updateAdminSummary() {
     var totalSaldo = 0;
-    for (var i = 0; i < daftarNasabah.length; i++) {
-        totalSaldo += hitungSaldoNasabah(daftarNasabah[i].id);
+    var nasabahList = window.daftarNasabah || [];
+    for (var i = 0; i < nasabahList.length; i++) {
+        totalSaldo += hitungSaldoNasabah(nasabahList[i].id);
     }
     document.getElementById('adminSaldoGlobal').textContent = 'Rp ' + formatRupiah(totalSaldo);
 }
 
 // =============================================
-// VERIFIKASI
+// VERIFIKASI - RESPONSIF HP + FOTO BISA DIKLIK
 // =============================================
 
 function renderVerifikasiAdmin() {
     var container = document.getElementById('adminVerifikasiList');
     if (!container) return;
     
-    var menunggu = getTransaksiByStatus('menunggu');
+    var transaksi = window.daftarSampah || [];
+    console.log('📋 Total transaksi di cache:', transaksi.length);
+    
+    var menunggu = transaksi.filter(function(item) {
+        return item.status === 'menunggu';
+    });
+    
+    console.log('⏳ Menunggu verifikasi:', menunggu.length);
     
     var countEl = document.getElementById('adminVerifikasiCount');
     if (countEl) countEl.textContent = 'Menunggu: ' + menunggu.length;
@@ -341,49 +348,298 @@ function renderVerifikasiAdmin() {
     var html = '';
     for (var i = 0; i < menunggu.length; i++) {
         var item = menunggu[i];
-        var nilai = (item.berat || 0) * (item.hargaPerKg || item.harga_per_kg || 0);
-        var nasabah = getNasabahById(item.nasabahId || item.nasabah_id);
+        var harga = item.harga_per_kg || item.hargaPerKg || 0;
+        var nilai = (item.berat || 0) * harga;
+        var nasabah = getNasabahById(item.nasabah_id) || getNasabahById(item.nasabahId);
         
-        html += '<div class="list-item" style="flex-direction:column;align-items:stretch;">';
-        html += '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-        html += '    <div class="list-left">';
-        html += '      <div class="avatar" style="width:28px;height:28px;font-size:10px;">' + (nasabah ? nasabah.nama.charAt(0) : '?') + '</div>';
-        html += '      <div>';
-        html += '        <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : 'Unknown') + '</div>';
-        html += '        <div style="font-size:9px;color:#64748b;">' + (item.bsu || '-') + ' | ' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</div>';
-        html += '        <div style="font-size:8px;color:#94a3b8;">Ketua: ' + (item.ketua || '-') + '</div>';
+        // Cek ketersediaan foto
+        var hasFotoTimbang = item.foto_timbang && item.foto_timbang !== 'null' && item.foto_timbang !== '';
+        var hasFotoHasil = item.foto_hasil && item.foto_hasil !== 'null' && item.foto_hasil !== '';
+        var hasFotoBukti = item.foto_bukti && item.foto_bukti !== 'null' && item.foto_bukti !== '';
+        
+        var fotoCount = 0;
+        if (hasFotoTimbang) fotoCount++;
+        if (hasFotoHasil) fotoCount++;
+        if (hasFotoBukti) fotoCount++;
+        
+        html += '<div class="list-item" style="flex-direction:column;align-items:stretch;margin-bottom:12px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:white;">';
+        
+        // ===== HEADER =====
+        html += '  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px;">';
+        html += '    <div class="list-left" style="align-items:flex-start;flex:1;min-width:0;">';
+        html += '      <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;">' + (nasabah ? nasabah.nama.charAt(0).toUpperCase() : '?') + '</div>';
+        html += '      <div style="min-width:0;flex:1;">';
+        html += '        <div style="font-size:13px;font-weight:700;color:#1e293b;word-break:break-word;">' + (nasabah ? nasabah.nama : (item.nama_nasabah || 'Unknown')) + '</div>';
+        html += '        <div style="font-size:9px;color:#64748b;word-break:break-word;">' + (item.bsu || '-') + ' | ' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</div>';
+        html += '        <div style="font-size:8px;color:#94a3b8;margin-top:1px;">Ketua: ' + (item.ketua || '-') + ' | 📅 ' + (item.tanggal || '-') + '</div>';
+        html += '        <div style="font-size:8px;color:#94a3b8;margin-top:1px;display:flex;flex-wrap:wrap;gap:4px;">';
+        if (hasFotoTimbang) html += '<span style="background:#dbeafe;padding:0 6px;border-radius:3px;">📷</span>';
+        if (hasFotoHasil) html += '<span style="background:#dbeafe;padding:0 6px;border-radius:3px;">📸</span>';
+        if (hasFotoBukti) html += '<span style="background:#dbeafe;padding:0 6px;border-radius:3px;">📋</span>';
+        if (fotoCount === 0) html += '<span style="color:#94a3b8;">Tidak ada foto</span>';
+        html += '</div>';
         html += '      </div>';
         html += '    </div>';
-        html += '    <div style="text-align:right;">';
-        html += '      <div style="font-size:11px;font-weight:600;">Rp ' + formatRupiah(nilai) + '</div>';
+        html += '    <div style="text-align:right;flex-shrink:0;">';
+        html += '      <div style="font-size:13px;font-weight:700;color:#0d9488;">Rp ' + formatRupiah(nilai) + '</div>';
         html += '      <div style="font-size:9px;color:#64748b;">' + (item.berat || 0) + ' kg</div>';
+        html += '      <span class="badge badge-pending" style="font-size:8px;padding:2px 8px;">⏳ Menunggu</span>';
         html += '    </div>';
         html += '  </div>';
-        html += '  <div style="font-size:10px;color:#475569;padding:4px 8px;background:#f1f5f9;border-radius:4px;margin-bottom:6px;">';
-        html += '    <strong>Sampah:</strong> ' + (item.nama || '-');
+        
+        // ===== INFO SAMPAH =====
+        html += '  <div style="font-size:9px;color:#475569;padding:4px 8px;background:#f1f5f9;border-radius:4px;margin-bottom:8px;word-break:break-word;">';
+        html += '    <strong>🗑️ Sampah:</strong> ' + (item.nama || '-');
+        html += '    <span style="margin-left:8px;"><strong>Jenis:</strong> ' + (item.jenis || 'nonorganik') + '</span>';
         html += '  </div>';
-        html += '  <div style="display:flex;gap:6px;justify-content:flex-end;">';
-        html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')"><i class="fa-solid fa-check"></i> Terima</button>';
-        html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')"><i class="fa-solid fa-xmark"></i> Tolak</button>';
+        
+        // ===== FOTO BUKTI (3 KOLOM - RESPONSIF HP) =====
+        if (hasFotoTimbang || hasFotoHasil || hasFotoBukti) {
+            html += '  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
+            
+            // FOTO TIMBANG
+            html += '    <div style="background:#f8fafc;border-radius:6px;padding:4px;text-align:center;border:1px solid #e2e8f0;">';
+            html += '      <div style="font-size:7px;font-weight:600;color:#64748b;margin-bottom:2px;">📷 Timbang</div>';
+            if (hasFotoTimbang) {
+                html += '      <img src="' + item.foto_timbang + '" style="width:100%;max-height:80px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal(\'' + item.foto_timbang + '\', \'📷 Foto Timbang - ' + (nasabah ? nasabah.nama : '') + '\')" onerror="this.parentElement.innerHTML=\'<div style=padding:10px;color:#94a3b8;font-size:8px;>❌</div>\'" title="Klik untuk perbesar">';
+            } else {
+                html += '      <div style="padding:15px;color:#94a3b8;font-size:8px;">-</div>';
+            }
+            html += '    </div>';
+            
+            // FOTO HASIL
+            html += '    <div style="background:#f8fafc;border-radius:6px;padding:4px;text-align:center;border:1px solid #e2e8f0;">';
+            html += '      <div style="font-size:7px;font-weight:600;color:#64748b;margin-bottom:2px;">📸 Hasil</div>';
+            if (hasFotoHasil) {
+                html += '      <img src="' + item.foto_hasil + '" style="width:100%;max-height:80px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal(\'' + item.foto_hasil + '\', \'📸 Foto Hasil - ' + (nasabah ? nasabah.nama : '') + '\')" onerror="this.parentElement.innerHTML=\'<div style=padding:10px;color:#94a3b8;font-size:8px;>❌</div>\'" title="Klik untuk perbesar">';
+            } else {
+                html += '      <div style="padding:15px;color:#94a3b8;font-size:8px;">-</div>';
+            }
+            html += '    </div>';
+            
+            // FOTO BUKTI
+            html += '    <div style="background:#f8fafc;border-radius:6px;padding:4px;text-align:center;border:1px solid #e2e8f0;">';
+            html += '      <div style="font-size:7px;font-weight:600;color:#64748b;margin-bottom:2px;">📋 Bukti</div>';
+            if (hasFotoBukti) {
+                html += '      <img src="' + item.foto_bukti + '" style="width:100%;max-height:80px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal(\'' + item.foto_bukti + '\', \'📋 Foto Bukti - ' + (nasabah ? nasabah.nama : '') + '\')" onerror="this.parentElement.innerHTML=\'<div style=padding:10px;color:#94a3b8;font-size:8px;>❌</div>\'" title="Klik untuk perbesar">';
+            } else {
+                html += '      <div style="padding:15px;color:#94a3b8;font-size:8px;">-</div>';
+            }
+            html += '    </div>';
+            
+            html += '  </div>';
+        }
+        
+        // ===== TOMBOL AKSI =====
+        html += '  <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid #f1f5f9;padding-top:8px;flex-wrap:wrap;">';
+        html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#16a34a;color:white;display:flex;align-items:center;gap:3px;">';
+        html += '      <i class="fa-solid fa-check"></i> Terima';
+        html += '    </button>';
+        html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#dc2626;color:white;display:flex;align-items:center;gap:3px;">';
+        html += '      <i class="fa-solid fa-xmark"></i> Tolak';
+        html += '    </button>';
+        html += '    <button class="btn-verifikasi detail" onclick="showDetailVerifikasi(\'' + item.id + '\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#3b82f6;color:white;display:flex;align-items:center;gap:3px;">';
+        html += '      <i class="fa-solid fa-eye"></i> Detail';
+        html += '    </button>';
         html += '  </div>';
+        
         html += '</div>';
     }
     
     container.innerHTML = html;
 }
 
-function verifikasiSampah(id, status) {
-    var item = updateStatusTransaksi(id, status);
-    if (item) {
-        showToast('Data sampah ' + (status === 'diverifikasi' ? 'diverifikasi' : 'ditolak'), false);
-        renderVerifikasiAdmin();
-        renderDataBSU();
-        renderNasabahAdmin();
-        updateAdminSummary();
-        renderAdminStatistik();
-        renderDashboardCharts();
-        renderTopNasabah();
-        renderRingkasanJenisSampah();
+// =============================================
+// OPEN FOTO MODAL - UNTUK MELIHAT FOTO BESAR
+// =============================================
+
+function openFotoModal(src, title) {
+    var html = `
+        <div id="modalFoto" class="modal-foto-overlay" style="display:flex;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;justify-content:center;align-items:center;padding:20px;" onclick="if(event.target===this) this.style.display='none'">
+            <div style="max-width:95%;max-height:95%;position:relative;">
+                <button onclick="document.getElementById('modalFoto').style.display='none'" style="position:absolute;top:-40px;right:0;background:none;border:none;color:white;font-size:28px;cursor:pointer;z-index:10;">&times;</button>
+                ${title ? '<div style="color:white;font-size:14px;font-weight:600;text-align:center;margin-bottom:10px;text-shadow:0 2px 4px rgba(0,0,0,0.5);">' + title + '</div>' : ''}
+                <img src="${src}" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);" onclick="event.stopPropagation();">
+                <div style="color:rgba(255,255,255,0.6);font-size:11px;text-align:center;margin-top:8px;">Klik di luar gambar untuk menutup</div>
+            </div>
+        </div>
+    `;
+    
+    var oldModal = document.getElementById('modalFoto');
+    if (oldModal) oldModal.remove();
+    
+    var div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div.firstElementChild);
+}
+
+// =============================================
+// SHOW DETAIL VERIFIKASI (MODAL DENGAN FOTO)
+// =============================================
+
+function showDetailVerifikasi(id) {
+    var transaksi = window.daftarSampah || [];
+    var item = null;
+    for (var i = 0; i < transaksi.length; i++) {
+        if (transaksi[i].id === id) {
+            item = transaksi[i];
+            break;
+        }
+    }
+    
+    if (!item) {
+        showToast('Data transaksi tidak ditemukan!', true);
+        return;
+    }
+    
+    var harga = item.harga_per_kg || item.hargaPerKg || 0;
+    var nilai = (item.berat || 0) * harga;
+    var nasabah = getNasabahById(item.nasabah_id) || getNasabahById(item.nasabahId);
+    
+    var hasFotoTimbang = item.foto_timbang && item.foto_timbang !== 'null' && item.foto_timbang !== '';
+    var hasFotoHasil = item.foto_hasil && item.foto_hasil !== 'null' && item.foto_hasil !== '';
+    var hasFotoBukti = item.foto_bukti && item.foto_bukti !== 'null' && item.foto_bukti !== '';
+    
+    var html = `
+        <div id="modalDetailVerifikasi" class="modal-overlay" style="display:flex;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;justify-content:center;align-items:center;padding:16px;" onclick="if(event.target===this) this.style.display='none'">
+            <div class="modal-content" style="max-width:600px;width:100%;max-height:90vh;overflow-y:auto;background:white;border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px;">
+                    <h3 style="font-size:15px;font-weight:700;color:#1e293b;margin:0;">
+                        <i class="fa-solid fa-receipt" style="color:#0d9488;"></i> Detail Transaksi
+                    </h3>
+                    <button class="modal-close" onclick="document.getElementById('modalDetailVerifikasi').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <!-- Info Nasabah -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:40px;height:40px;border-radius:50%;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;">
+                                ${nasabah ? nasabah.nama.charAt(0).toUpperCase() : '?'}
+                            </div>
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:#1e293b;">${nasabah ? nasabah.nama : (item.nama_nasabah || 'Unknown')}</div>
+                                <div style="font-size:10px;color:#64748b;">${item.bsu || '-'} | ${item.rw || '-'} - ${item.rt || '-'}</div>
+                                <div style="font-size:9px;color:#94a3b8;">Ketua: ${item.ketua || '-'}</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:16px;font-weight:700;color:#0d9488;">Rp ${formatRupiah(nilai)}</div>
+                            <div style="font-size:10px;color:#64748b;">${item.berat || 0} kg</div>
+                            <span class="badge badge-pending" style="font-size:9px;padding:2px 10px;">⏳ Menunggu</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Sampah -->
+                    <div style="background:#f1f5f9;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:11px;">
+                        <strong>🗑️ Sampah:</strong> ${item.nama || '-'} 
+                        <span style="margin-left:10px;"><strong>Jenis:</strong> ${item.jenis || 'nonorganik'}</span>
+                        <span style="margin-left:10px;"><strong>📅:</strong> ${item.tanggal || '-'}</span>
+                    </div>
+                    
+                    <!-- FOTO BUKTI (3 KOLOM) -->
+                    <div style="margin-bottom:12px;">
+                        <div style="font-size:11px;font-weight:600;color:#1e293b;margin-bottom:6px;">📸 Foto Bukti</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                            <!-- Foto Timbang -->
+                            <div style="background:#f8fafc;border-radius:6px;padding:6px;text-align:center;border:1px solid #e2e8f0;">
+                                <div style="font-size:8px;font-weight:600;color:#64748b;margin-bottom:4px;">📷 Timbang</div>
+                                ${hasFotoTimbang ? 
+                                    `<img src="${item.foto_timbang}" style="width:100%;max-height:150px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal('${item.foto_timbang}', '📷 Foto Timbang - ${nasabah ? nasabah.nama : ''}')" onerror="this.parentElement.innerHTML='<div style=padding:15px;color:#94a3b8;font-size:10px;>❌</div>'">` : 
+                                    `<div style="padding:20px;color:#94a3b8;font-size:10px;">-</div>`
+                                }
+                            </div>
+                            
+                            <!-- Foto Hasil -->
+                            <div style="background:#f8fafc;border-radius:6px;padding:6px;text-align:center;border:1px solid #e2e8f0;">
+                                <div style="font-size:8px;font-weight:600;color:#64748b;margin-bottom:4px;">📸 Hasil</div>
+                                ${hasFotoHasil ? 
+                                    `<img src="${item.foto_hasil}" style="width:100%;max-height:150px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal('${item.foto_hasil}', '📸 Foto Hasil - ${nasabah ? nasabah.nama : ''}')" onerror="this.parentElement.innerHTML='<div style=padding:15px;color:#94a3b8;font-size:10px;>❌</div>'">` : 
+                                    `<div style="padding:20px;color:#94a3b8;font-size:10px;">-</div>`
+                                }
+                            </div>
+                            
+                            <!-- Foto Bukti -->
+                            <div style="background:#f8fafc;border-radius:6px;padding:6px;text-align:center;border:1px solid #e2e8f0;">
+                                <div style="font-size:8px;font-weight:600;color:#64748b;margin-bottom:4px;">📋 Bukti</div>
+                                ${hasFotoBukti ? 
+                                    `<img src="${item.foto_bukti}" style="width:100%;max-height:150px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;background:white;cursor:pointer;" onclick="openFotoModal('${item.foto_bukti}', '📋 Foto Bukti - ${nasabah ? nasabah.nama : ''}')" onerror="this.parentElement.innerHTML='<div style=padding:15px;color:#94a3b8;font-size:10px;>❌</div>'">` : 
+                                    `<div style="padding:20px;color:#94a3b8;font-size:10px;">-</div>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tombol Aksi -->
+                    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #e2e8f0;padding-top:12px;flex-wrap:wrap;">
+                        <button onclick="document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:1px solid #e2e8f0;border-radius:4px;background:white;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;">
+                            Tutup
+                        </button>
+                        <button onclick="verifikasiSampah('${item.id}','diverifikasi');document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:none;border-radius:4px;background:#16a34a;color:white;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                            <i class="fa-solid fa-check"></i> Terima
+                        </button>
+                        <button onclick="verifikasiSampah('${item.id}','ditolak');document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:none;border-radius:4px;background:#dc2626;color:white;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                            <i class="fa-solid fa-xmark"></i> Tolak
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    var oldModal = document.getElementById('modalDetailVerifikasi');
+    if (oldModal) oldModal.remove();
+    
+    var div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div.firstElementChild);
+}
+
+// =============================================
+// VERIFIKASI SAMPAH
+// =============================================
+
+async function verifikasiSampah(id, status) {
+    console.log('🔍 Verifikasi sampah:', id, '->', status);
+    showLoading(true);
+    
+    try {
+        var updated = await updateStatusTransaksi(id, status);
+        console.log('📦 Hasil update:', updated);
+        
+        if (updated) {
+            var data = window.daftarSampah || [];
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].id === id) {
+                    data[i].status = status;
+                    data[i].updated_at = new Date().toISOString();
+                    break;
+                }
+            }
+            
+            if (window._onTransaksiChange) {
+                window._onTransaksiChange({ eventType: 'UPDATE', new: updated });
+            }
+            
+            var message = status === 'diverifikasi' ? '✅ Data sampah diverifikasi!' : '❌ Data sampah ditolak!';
+            showToast(message, false);
+            
+            renderVerifikasiAdmin();
+            renderDataBSU();
+            renderNasabahAdmin();
+            updateAdminSummary();
+            renderAdminStatistik();
+            renderDashboardCharts();
+            renderTopNasabah();
+            renderRingkasanJenisSampah();
+        } else {
+            showToast('⚠️ Gagal memperbarui status! Coba refresh.', true);
+        }
+    } catch (e) {
+        console.error('❌ Error verifikasi:', e);
+        showToast('⚠️ Error: ' + e.message, true);
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -452,7 +708,7 @@ function renderDataBSU() {
     var filterRW = document.getElementById('filterRW')?.value || 'all';
     var filterRT = document.getElementById('filterRT')?.value || 'all';
     
-    var bsuList = dataBSU;
+    var bsuList = window.dataBSU || [];
     if (filterBSU !== 'all') bsuList = bsuList.filter(function(b) { return b.id === filterBSU; });
     if (filterRW !== 'all') bsuList = bsuList.filter(function(b) { return b.rw === filterRW; });
     if (filterRT !== 'all') bsuList = bsuList.filter(function(b) { return b.rt === filterRT; });
@@ -474,7 +730,7 @@ function renderDataBSU() {
         
         for (var j = 0; j < transaksi.length; j++) {
             var t = transaksi[j];
-            var harga = t.hargaPerKg || t.harga_per_kg || 0;
+            var harga = t.harga_per_kg || t.hargaPerKg || 0;
             var berat = t.berat || 0;
             totalBerat += berat;
             totalNilai += berat * harga;
@@ -514,8 +770,9 @@ function updateFilterOptions() {
     if (bsuSelect) {
         var currentBSU = bsuSelect.value;
         bsuSelect.innerHTML = '<option value="all">Semua BSU</option>';
-        for (var i = 0; i < dataBSU.length; i++) {
-            bsuSelect.innerHTML += '<option value="' + dataBSU[i].id + '">' + dataBSU[i].nama + '</option>';
+        var bsuData = window.dataBSU || [];
+        for (var i = 0; i < bsuData.length; i++) {
+            bsuSelect.innerHTML += '<option value="' + bsuData[i].id + '">' + bsuData[i].nama + '</option>';
         }
         bsuSelect.value = currentBSU;
     }
@@ -552,7 +809,7 @@ function renderNasabahAdmin() {
     var container = document.getElementById('adminNasabahList');
     if (!container) return;
     
-    var nasabahList = daftarNasabah;
+    var nasabahList = window.daftarNasabah || [];
     
     if (nasabahList.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada nasabah terdaftar</p></div>';
@@ -570,7 +827,7 @@ function renderNasabahAdmin() {
             if (transaksi[j].status === 'diverifikasi') diverifikasi++;
         }
         
-        var bsu = getBSUById(n.bsuId);
+        var bsu = getBSUById(n.bsu_id);
         var isManual = n.isManual || false;
         var avatarBg = isManual ? '#fef3c7' : '#dcfce7';
         var avatarColor = isManual ? '#d97706' : '#15803d';
@@ -643,14 +900,15 @@ function updateFilterLaporan() {
     var select = document.getElementById('filterBSULaporan');
     if (select) {
         select.innerHTML = '<option value="all">Semua BSU</option>';
-        for (var i = 0; i < dataBSU.length; i++) {
-            select.innerHTML += '<option value="' + dataBSU[i].id + '">' + dataBSU[i].nama + '</option>';
+        var bsuData = window.dataBSU || [];
+        for (var i = 0; i < bsuData.length; i++) {
+            select.innerHTML += '<option value="' + bsuData[i].id + '">' + bsuData[i].nama + '</option>';
         }
     }
 }
 
 function exportAdminLaporan(format) {
-    var data = daftarSampah || [];
+    var data = window.daftarSampah || [];
     var bsu = document.getElementById('filterBSULaporan')?.value || 'all';
     var periode = document.getElementById('filterPeriodeLaporan')?.value || 'mingguan';
     
@@ -669,7 +927,7 @@ function exportAdminLaporan(format) {
     
     if (bsu !== 'all') {
         data = data.filter(function(item) {
-            return item.bsuId === bsu || item.bsu_id === bsu || item.bsu === bsu;
+            return item.bsu_id === bsu || item.bsuId === bsu || item.bsu === bsu;
         });
     }
     
@@ -706,15 +964,16 @@ function exportAdminLaporan(format) {
 }
 
 function exportAdminNasabahRekap() {
-    if (daftarSampah.length === 0) {
+    var data = window.daftarSampah || [];
+    if (data.length === 0) {
         showToast('Tidak ada data untuk diekspor!', true);
         return;
     }
     
     var nasabahMap = {};
-    for (var i = 0; i < daftarSampah.length; i++) {
-        var item = daftarSampah[i];
-        var nama = item.namaNasabah || item.nama_nasabah || '-';
+    for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var nama = item.nama_nasabah || item.namaNasabah || '-';
         if (nama === '-' || nama === 'undefined' || nama === 'null') continue;
         if (!nasabahMap[nama]) {
             nasabahMap[nama] = {
@@ -727,7 +986,7 @@ function exportAdminNasabahRekap() {
                 rt: item.rt || '-'
             };
         }
-        var harga = item.hargaPerKg || item.harga_per_kg || 0;
+        var harga = item.harga_per_kg || item.hargaPerKg || 0;
         var nilai = (item.berat || 0) * harga;
         nasabahMap[nama].totalBerat += item.berat || 0;
         nasabahMap[nama].totalNilai += nilai;
@@ -737,7 +996,7 @@ function exportAdminNasabahRekap() {
     var rekapData = Object.values(nasabahMap);
     rekapData.sort(function(a, b) { return b.totalNilai - a.totalNilai; });
     
-    var html = generateAdminExcelHTML(rekapData, daftarSampah, 'all', 'all', 'all', 'Rekap Nasabah');
+    var html = generateAdminExcelHTML(rekapData, data, 'all', 'all', 'all', 'Rekap Nasabah');
     downloadExcel(html, 'Rekap_Semua_Nasabah.xls');
     showToast('Rekap nasabah berhasil diekspor!', false);
 }
@@ -762,14 +1021,14 @@ window.updateFilterOptions = updateFilterOptions;
 window.exportAdminLaporan = exportAdminLaporan;
 window.exportAdminNasabahRekap = exportAdminNasabahRekap;
 window.updateFilterLaporan = updateFilterLaporan;
+window.showDetailVerifikasi = showDetailVerifikasi;
+window.openFotoModal = openFotoModal;
 
-console.log('✅ Dashboard Admin loaded with Charts');
-console.log('👤 Total Nasabah:', daftarNasabah.length);
+console.log('✅ Dashboard Admin loaded - Responsif HP + Foto Bisa Dilihat');
 
-// dashboard-admin.js - TAMBAHKAN INI DI AKHIR FILE
-// =====================================================
+// =============================================
 // AUTO REFRESH SETUP
-// =====================================================
+// =============================================
 
 function setupAdminRealtime() {
     if (adminRealtimeSetup) return;

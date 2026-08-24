@@ -1,39 +1,17 @@
-// laporan.js - LENGKAP DENGAN FUNGSI DOWNLOAD
+// laporan.js
 // =====================================================
-// LAPORAN ADMIN EXCEL LENGKAP - DENGAN REKAP PER NAMA SAMPAH
+// LAPORAN ADMIN DENGAN REKAP PER NAMA SAMPAH & 3 FOTO BUKTI
+// UKURAN FOTO DIKECILKAN AGAR TIDAK KELUAR KOLOM
 // =====================================================
 
-// ==================== FUNGSI UTILITY ====================
-function getFilterTextForReport() {
-    var parts = [];
-    if (currentFilterBSU && currentFilterBSU !== 'all') parts.push('BSU: ' + currentFilterBSU);
-    if (currentFilterRW && currentFilterRW !== 'all') parts.push('RW: ' + currentFilterRW);
-    if (currentFilterRT && currentFilterRT !== 'all') parts.push('RT: ' + currentFilterRT);
-    if (parts.length === 0) return 'Semua Data';
-    return parts.join(' | ');
-}
-
+// ==================== VARIABEL GLOBAL ====================
 var currentFilterBSU = 'all';
 var currentFilterRW = 'all';
 var currentFilterRT = 'all';
 
-// ==================== FUNGSI FILTER ====================
-function filterDataByFilters(data, bsu, rw, rt) {
-    var result = data.slice();
-    if (bsu && bsu !== 'all') {
-        result = result.filter(function(item) { return item.bsuId === bsu || item.bsu === bsu; });
-    }
-    if (rw && rw !== 'all') {
-        result = result.filter(function(item) { return item.rw === rw; });
-    }
-    if (rt && rt !== 'all') {
-        result = result.filter(function(item) { return item.rt === rt; });
-    }
-    return result;
-}
-
-// ==================== FORMAT TANGGAL ====================
 var namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+// ==================== FUNGSI UTILITY ====================
 
 function formatTanggalIndo(date) {
     if (typeof date === 'string') {
@@ -74,14 +52,40 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
+function getFilterTextForReport() {
+    var parts = [];
+    if (currentFilterBSU && currentFilterBSU !== 'all') parts.push('BSU: ' + currentFilterBSU);
+    if (currentFilterRW && currentFilterRW !== 'all') parts.push('RW: ' + currentFilterRW);
+    if (currentFilterRT && currentFilterRT !== 'all') parts.push('RT: ' + currentFilterRT);
+    if (parts.length === 0) return 'Semua Data';
+    return parts.join(' | ');
+}
+
+function filterDataByFilters(data, bsu, rw, rt) {
+    var result = data.slice();
+    if (bsu && bsu !== 'all') {
+        result = result.filter(function(item) { 
+            return item.bsu_id === bsu || item.bsuId === bsu || item.bsu === bsu; 
+        });
+    }
+    if (rw && rw !== 'all') {
+        result = result.filter(function(item) { return item.rw === rw; });
+    }
+    if (rt && rt !== 'all') {
+        result = result.filter(function(item) { return item.rt === rt; });
+    }
+    return result;
+}
+
 // ==================== GENERATE REKAP PER NASABAH ADMIN ====================
+
 function generateRekapPerNasabahAdmin(data) {
     var nasabahMap = {};
     
     for (var i = 0; i < data.length; i++) {
         var item = data[i];
         var bsu = item.bsu || 'Tanpa BSU';
-        var nasabah = item.namaNasabah || '-';
+        var nasabah = item.nama_nasabah || item.namaNasabah || '-';
         
         if (nasabah === '-' || nasabah === 'undefined' || nasabah === 'null') continue;
         
@@ -102,7 +106,7 @@ function generateRekapPerNasabahAdmin(data) {
             };
         }
         var berat = parseFloat(item.berat) || 0;
-        var harga = parseFloat(item.hargaPerKg) || getHargaByNamaSampah(item.nama);
+        var harga = parseFloat(item.harga_per_kg || item.hargaPerKg || getHargaByNamaSampah(item.nama) || 0);
         var nilai = berat * harga;
         nasabahMap[key].totalBerat += berat;
         nasabahMap[key].totalNilai += nilai;
@@ -117,7 +121,7 @@ function generateRekapPerNasabahAdmin(data) {
             berat: berat,
             harga: harga,
             nilai: nilai,
-            tanggal: item.tanggal || new Date().toISOString(),
+            tanggal: item.tanggal || item.created_at || new Date().toISOString(),
             rw: item.rw || '-',
             rt: item.rt || '-',
             fotoTimbang: item.foto_timbang || null,
@@ -136,6 +140,7 @@ function generateRekapPerNasabahAdmin(data) {
 }
 
 // ==================== GENERATE REKAP PER NAMA SAMPAH ====================
+
 function generateRekapPerSampah(data) {
     var sampahMap = {};
     
@@ -151,16 +156,18 @@ function generateRekapPerSampah(data) {
                 totalTransaksi: 0,
                 bsu: item.bsu || '-',
                 jenis: item.jenis || 'nonorganik',
-                hargaPerKg: item.hargaPerKg || 0
+                hargaPerKg: item.harga_per_kg || item.hargaPerKg || 0
             };
         }
         var berat = parseFloat(item.berat) || 0;
-        var harga = parseFloat(item.hargaPerKg) || getHargaByNamaSampah(item.nama);
+        var harga = parseFloat(item.harga_per_kg || item.hargaPerKg || getHargaByNamaSampah(item.nama) || 0);
         var nilai = berat * harga;
         sampahMap[namaSampah].totalBerat += berat;
         sampahMap[namaSampah].totalNilai += nilai;
         sampahMap[namaSampah].totalTransaksi++;
-        if (item.hargaPerKg) sampahMap[namaSampah].hargaPerKg = item.hargaPerKg;
+        if (item.harga_per_kg || item.hargaPerKg) {
+            sampahMap[namaSampah].hargaPerKg = item.harga_per_kg || item.hargaPerKg;
+        }
     }
     
     var result = Object.values(sampahMap);
@@ -172,8 +179,9 @@ function generateRekapPerSampah(data) {
 }
 
 // ==================== GENERATE LAPORAN ====================
+
 function generateLaporanMingguanAdmin(data, bsu, rw, rt) {
-    var filtered = filterDataByFilters(data || daftarSampah, bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
+    var filtered = filterDataByFilters(data || window.daftarSampah || [], bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
     var today = new Date();
     var weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay());
@@ -183,7 +191,8 @@ function generateLaporanMingguanAdmin(data, bsu, rw, rt) {
         var item = filtered[i];
         if (item.jenis === 'organik') totalOrganik += item.berat;
         else totalNonorganik += item.berat;
-        totalNilai += (item.berat * item.hargaPerKg);
+        var harga = item.harga_per_kg || item.hargaPerKg || 0;
+        totalNilai += (item.berat * harga);
     }
     var totalBerat = totalOrganik + totalNonorganik;
     
@@ -202,14 +211,15 @@ function generateLaporanMingguanAdmin(data, bsu, rw, rt) {
 }
 
 function generateLaporanBulananAdmin(data, bsu, rw, rt) {
-    var filtered = filterDataByFilters(data || daftarSampah, bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
+    var filtered = filterDataByFilters(data || window.daftarSampah || [], bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
     var today = new Date();
     var totalOrganik = 0, totalNonorganik = 0, totalNilai = 0;
     for (var i = 0; i < filtered.length; i++) {
         var item = filtered[i];
         if (item.jenis === 'organik') totalOrganik += item.berat;
         else totalNonorganik += item.berat;
-        totalNilai += (item.berat * item.hargaPerKg);
+        var harga = item.harga_per_kg || item.hargaPerKg || 0;
+        totalNilai += (item.berat * harga);
     }
     var totalBerat = totalOrganik + totalNonorganik;
     
@@ -228,14 +238,15 @@ function generateLaporanBulananAdmin(data, bsu, rw, rt) {
 }
 
 function generateLaporanTahunanAdmin(data, bsu, rw, rt) {
-    var filtered = filterDataByFilters(data || daftarSampah, bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
+    var filtered = filterDataByFilters(data || window.daftarSampah || [], bsu || currentFilterBSU, rw || currentFilterRW, rt || currentFilterRT);
     var today = new Date();
     var totalOrganik = 0, totalNonorganik = 0, totalNilai = 0;
     for (var i = 0; i < filtered.length; i++) {
         var item = filtered[i];
         if (item.jenis === 'organik') totalOrganik += item.berat;
         else totalNonorganik += item.berat;
-        totalNilai += (item.berat * item.hargaPerKg);
+        var harga = item.harga_per_kg || item.hargaPerKg || 0;
+        totalNilai += (item.berat * harga);
     }
     var totalBerat = totalOrganik + totalNonorganik;
     
@@ -254,12 +265,12 @@ function generateLaporanTahunanAdmin(data, bsu, rw, rt) {
 }
 
 // ==================== GENERATE HTML EXCEL ADMIN ====================
+
 function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterRT, periode) {
     var tglCetak = formatTanggalIndo(new Date());
     var admin = sessionStorage.getItem('adminName') || 'Admin';
     var periodeText = periode || 'Laporan';
     
-    // Generate rekap per sampah
     var rekapSampah = generateRekapPerSampah(allData);
     
     var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ';
@@ -284,14 +295,19 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
     html += '.sub-total-row { background: #c5cae9; font-weight: bold; }';
     html += '.sampah-cell { text-align: left; font-weight: 600; }';
     html += '.nasabah-name { text-align: left; font-weight: bold; color: #1a237e; }';
-    html += '.foto-cell { text-align: center; vertical-align: middle; }';
-    html += '.foto-img { max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ccc; }';
+    html += '.foto-cell { text-align: center; vertical-align: middle; width: 50px; }';
+    // UKURAN FOTO DIPERKECIL - max 40x40px
+    html += '.foto-img { max-width: 40px; max-height: 40px; width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }';
+    html += '.foto-img-detail { max-width: 35px; max-height: 35px; width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }';
     html += '.grand-total { background: #1a237e; color: white; padding: 10px; text-align: center; font-size: 13px; font-weight: bold; margin-top: 12px; }';
     html += '.footer { text-align: center; font-size: 8px; color: #999; padding: 10px; border-top: 1px solid #ddd; margin-top: 10px; }';
     html += '.summary-box { background: #e8eaf6; padding: 8px 10px; border-radius: 4px; margin: 6px 0; }';
     html += '.summary-box td { border: none; padding: 2px 5px; font-size: 10px; }';
-    html += '.foto-label { font-size: 7px; color: #666; display: block; }';
-    html += '.sampah-rekap-title { background: #4caf50; color: white; padding: 6px 10px; font-size: 12px; font-weight: bold; margin-top: 10px; }';
+    html += '.foto-label { font-size: 6px; color: #666; display: block; }';
+    html += '.no-foto { color: #999; font-size: 8px; }';
+    // LEBAR KOLOM FOTO DIPERKECIL
+    html += 'col.foto-col { width: 45px; }';
+    html += 'td.foto-cell { max-width: 50px; overflow: hidden; }';
     html += '</style>';
     html += '</head><body>';
     
@@ -313,9 +329,9 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
     html += '<table style="width:100%;border:none;">';
     var totalBeratAll = 0, totalNilaiAll = 0;
     for (var i = 0; i < allData.length; i++) {
-        totalBeratAll += allData[i].berat;
-        var harga = allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama);
-        totalNilaiAll += allData[i].berat * harga;
+        totalBeratAll += allData[i].berat || 0;
+        var harga = allData[i].harga_per_kg || allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama) || 0;
+        totalNilaiAll += (allData[i].berat || 0) * harga;
     }
     html += '<tr><td style="border:none;text-align:left;font-weight:bold;width:15%;">Total Transaksi:</td><td style="border:none;text-align:left;">' + allData.length + '</td>';
     html += '<td style="border:none;text-align:left;font-weight:bold;width:15%;">Total Nasabah:</td><td style="border:none;text-align:left;">' + rekapData.length + '</td>';
@@ -327,13 +343,13 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
     html += '<div class="section-title"> REKAP PER NAMA SAMPAH</div>';
     html += '<table>';
     html += '<tr>';
-    html += '<th style="width:5%;">No</th>';
+    html += '<th style="width:4%;">No</th>';
     html += '<th style="width:30%;">Nama Sampah</th>';
     html += '<th style="width:10%;">Jenis</th>';
     html += '<th style="width:12%;">Total Berat (kg)</th>';
     html += '<th style="width:10%;">Total Transaksi</th>';
     html += '<th style="width:10%;">Harga/kg</th>';
-    html += '<th style="width:18%;">Total Nilai</th>';
+    html += '<th style="width:14%;">Total Nilai</th>';
     html += '</tr>';
     
     var grandTotalSampahBerat = 0;
@@ -343,7 +359,7 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
     for (var i = 0; i < rekapSampah.length; i++) {
         var s = rekapSampah[i];
         var bgColor = (i % 2 === 0) ? '#ffffff' : '#f9f9f9';
-        var jenisLabel = (s.jenis === 'organik') ? ' Organik' : ' Nonorganik';
+        var jenisLabel = (s.jenis === 'organik') ? 'Organik' : 'Nonorganik';
         
         html += '<tr style="background:' + bgColor + ';">';
         html += '<td>' + (i + 1) + '</td>';
@@ -387,18 +403,29 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
         
         html += '<div class="bsu-header"> ' + bsu + '</div>';
         
-        // Ringkasan per nasabah
+        // RINGKASAN PER NASABAH - FOTO UKURAN KECIL
         html += '<table>';
+        html += '<colgroup>';
+        html += '<col style="width:4%;">';
+        html += '<col style="width:18%;">';
+        html += '<col style="width:8%;">';
+        html += '<col style="width:10%;">';
+        html += '<col style="width:8%;">';
+        html += '<col style="width:14%;">';
+        html += '<col style="width:10%;" class="foto-col">';
+        html += '<col style="width:10%;" class="foto-col">';
+        html += '<col style="width:10%;" class="foto-col">';
+        html += '</colgroup>';
         html += '<tr>';
-        html += '<th style="width:5%;">No</th>';
-        html += '<th style="width:18%;">Nama Nasabah</th>';
-        html += '<th style="width:10%;">RW/RT</th>';
-        html += '<th style="width:12%;">Total Berat</th>';
-        html += '<th style="width:10%;">Transaksi</th>';
-        html += '<th style="width:15%;">Total Tabungan</th>';
-        html += '<th style="width:10%;"> Timbang</th>';
-        html += '<th style="width:10%;"> Hasil</th>';
-        html += '<th style="width:10%;"> Bukti</th>';
+        html += '<th>No</th>';
+        html += '<th>Nama Nasabah</th>';
+        html += '<th>RW/RT</th>';
+        html += '<th>Total Berat</th>';
+        html += '<th>Transaksi</th>';
+        html += '<th>Total Tabungan</th>';
+        html += '<th>📷</th>';
+        html += '<th>📸</th>';
+        html += '<th>📋</th>';
         html += '</tr>';
         
         var grandTotal = 0;
@@ -413,29 +440,26 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
             html += '<td>' + item.totalTransaksi + '</td>';
             html += '<td style="font-weight:bold;color:#1a237e;">' + formatRupiah(item.totalNilai) + '</td>';
             
-            html += '<td class="foto-cell">';
+            // FOTO TIMBANG - ukuran kecil
             if (item.fotoTimbang) {
-                html += '📷 Ada';
+                html += '<td class="foto-cell"><img src="' + item.fotoTimbang + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
             } else {
-                html += '-';
+                html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
             }
-            html += '</td>';
             
-            html += '<td class="foto-cell">';
+            // FOTO HASIL - ukuran kecil
             if (item.fotoHasil) {
-                html += '📸 Ada';
+                html += '<td class="foto-cell"><img src="' + item.fotoHasil + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
             } else {
-                html += '-';
+                html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
             }
-            html += '</td>';
             
-            html += '<td class="foto-cell">';
+            // FOTO BUKTI - ukuran kecil
             if (item.fotoBukti) {
-                html += '📋 Ada';
+                html += '<td class="foto-cell"><img src="' + item.fotoBukti + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
             } else {
-                html += '-';
+                html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
             }
-            html += '</td>';
             
             html += '</tr>';
             grandTotal += item.totalNilai;
@@ -451,22 +475,34 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
         html += '</tr>';
         html += '</table>';
         
-        // Detail per nasabah
+        // === DETAIL PER NASABAH - FOTO LEBIH KECIL ===
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
             html += '<div class="nasabah-title"> Detail Transaksi: ' + escapeHtml(item.namaNasabah) + ' (' + (item.rw || '-') + ' - ' + (item.rt || '-') + ')</div>';
             html += '<table>';
+            html += '<colgroup>';
+            html += '<col style="width:3%;">';
+            html += '<col style="width:10%;">';
+            html += '<col style="width:16%;">';
+            html += '<col style="width:7%;">';
+            html += '<col style="width:7%;">';
+            html += '<col style="width:9%;">';
+            html += '<col style="width:11%;">';
+            html += '<col style="width:10%;" class="foto-col">';
+            html += '<col style="width:10%;" class="foto-col">';
+            html += '<col style="width:10%;" class="foto-col">';
+            html += '</colgroup>';
             html += '<tr>';
-            html += '<th style="width:5%;">No</th>';
-            html += '<th style="width:12%;">Tanggal</th>';
-            html += '<th style="width:18%;">Nama Sampah</th>';
-            html += '<th style="width:8%;">Jenis</th>';
-            html += '<th style="width:8%;">Berat</th>';
-            html += '<th style="width:10%;">Harga/kg</th>';
-            html += '<th style="width:12%;">Nilai</th>';
-            html += '<th style="width:9%;"> Timbang</th>';
-            html += '<th style="width:9%;"> Hasil</th>';
-            html += '<th style="width:9%;"> Bukti</th>';
+            html += '<th>No</th>';
+            html += '<th>Tanggal</th>';
+            html += '<th>Nama Sampah</th>';
+            html += '<th>Jenis</th>';
+            html += '<th>Berat</th>';
+            html += '<th>Harga/kg</th>';
+            html += '<th>Nilai</th>';
+            html += '<th>📷</th>';
+            html += '<th>📸</th>';
+            html += '<th>📋</th>';
             html += '</tr>';
             
             for (var j = 0; j < item.detail.length; j++) {
@@ -483,29 +519,26 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
                 html += '<td>' + formatRupiah(d.harga) + '</td>';
                 html += '<td style="font-weight:bold;color:#1a237e;">' + formatRupiah(d.nilai) + '</td>';
                 
-                html += '<td class="foto-cell">';
+                // FOTO TIMBANG - detail lebih kecil
                 if (d.fotoTimbang) {
-                    html += '📷';
+                    html += '<td class="foto-cell"><img src="' + d.fotoTimbang + '" class="foto-img-detail" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
                 } else {
-                    html += '-';
+                    html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
                 }
-                html += '</td>';
                 
-                html += '<td class="foto-cell">';
+                // FOTO HASIL - detail lebih kecil
                 if (d.fotoHasil) {
-                    html += '📸';
+                    html += '<td class="foto-cell"><img src="' + d.fotoHasil + '" class="foto-img-detail" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
                 } else {
-                    html += '-';
+                    html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
                 }
-                html += '</td>';
                 
-                html += '<td class="foto-cell">';
+                // FOTO BUKTI - detail lebih kecil
                 if (d.fotoBukti) {
-                    html += '📋';
+                    html += '<td class="foto-cell"><img src="' + d.fotoBukti + '" class="foto-img-detail" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
                 } else {
-                    html += '-';
+                    html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
                 }
-                html += '</td>';
                 
                 html += '</tr>';
             }
@@ -537,15 +570,16 @@ function generateAdminExcelHTML(rekapData, allData, filterBSU, filterRW, filterR
 }
 
 // ==================== GENERATE PDF HTML ADMIN ====================
+
 function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT, periode) {
     var tglCetak = formatTanggalIndo(new Date());
     var admin = sessionStorage.getItem('adminName') || 'Admin';
     
     var totalBeratAll = 0, totalNilaiAll = 0;
     for (var i = 0; i < allData.length; i++) {
-        totalBeratAll += allData[i].berat;
-        var harga = allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama);
-        totalNilaiAll += allData[i].berat * harga;
+        totalBeratAll += allData[i].berat || 0;
+        var harga = allData[i].harga_per_kg || allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama) || 0;
+        totalNilaiAll += (allData[i].berat || 0) * harga;
     }
     
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
@@ -570,6 +604,7 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
     html += '.sub-total-row { background: #c5cae9; font-weight: bold; }';
     html += '.sampah-cell { text-align: left; font-weight: 600; }';
     html += '.nasabah-name { text-align: left; font-weight: bold; color: #1a237e; }';
+    html += '.foto-cell { text-align: center; }';
     html += '.footer { margin-top: 15px; text-align: center; font-size: 8px; color: #999; border-top: 1px solid #ddd; padding-top: 8px; }';
     html += '.signature { margin-top: 15px; display: flex; justify-content: space-around; }';
     html += '.signature-box { text-align: center; }';
@@ -578,6 +613,8 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
     html += '.page-break { page-break-after: always; }';
     html += '.grand-total { background: #1a237e; color: white; padding: 8px; text-align: center; border-radius: 4px; margin-top: 10px; font-size: 12px; }';
     html += '.no-print { display: block; } @media print { .no-print { display: none; } }';
+    html += '.foto-img { max-width: 30px; max-height: 30px; }';
+    html += '.no-foto { color: #999; font-size: 8px; }';
     html += '</style>';
     html += '</head><body>';
     
@@ -637,20 +674,26 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
         html += '<div class="bsu-title"> ' + bsu + '</div>';
         
         html += '<table>';
-        html += '<tr><th>No</th><th>Nama Nasabah</th><th>RW/RT</th><th>Berat (kg)</th><th>Transaksi</th><th>Tabungan</th></tr>';
+        html += '<tr><th>No</th><th>Nama Nasabah</th><th>RW/RT</th><th>Berat (kg)</th><th>Transaksi</th><th>Tabungan</th>';
+        html += '<th>📷</th><th>📸</th><th>📋</th></tr>';
         
         var grandTotal = 0;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
             
-            html += '<tr>' +
-                '<td>' + (i + 1) + '</td>' +
-                '<td class="nasabah-name">' + escapeHtml(item.namaNasabah) + '</td>' +
-                '<td>' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</td>' +
-                '<td>' + item.totalBerat.toFixed(2) + '</td>' +
-                '<td>' + item.totalTransaksi + '</td>' +
-                '<td>' + formatRupiah(item.totalNilai) + '</td>' +
-                '</tr>';
+            html += '<tr>';
+            html += '<td>' + (i + 1) + '</td>';
+            html += '<td class="nasabah-name">' + escapeHtml(item.namaNasabah) + '</td>';
+            html += '<td>' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</td>';
+            html += '<td>' + item.totalBerat.toFixed(2) + '</td>';
+            html += '<td>' + item.totalTransaksi + '</td>';
+            html += '<td>' + formatRupiah(item.totalNilai) + '</td>';
+            
+            html += '<td class="foto-cell">' + (item.fotoTimbang ? '📷' : '<span class="no-foto">-</span>') + '</td>';
+            html += '<td class="foto-cell">' + (item.fotoHasil ? '📸' : '<span class="no-foto">-</span>') + '</td>';
+            html += '<td class="foto-cell">' + (item.fotoBukti ? '📋' : '<span class="no-foto">-</span>') + '</td>';
+            
+            html += '</tr>';
             grandTotal += item.totalNilai;
             grandTotalAll += item.totalNilai;
             grandTotalBerat += item.totalBerat;
@@ -660,6 +703,7 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
         html += '<tr class="sub-total-row">' +
             '<td colspan="5" style="text-align:right;">TOTAL ' + bsu + '</td>' +
             '<td>' + formatRupiah(grandTotal) + '</td>' +
+            '<td colspan="3"></td>' +
             '</tr>';
         html += '</table>';
         
@@ -668,24 +712,31 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
             var item = items[i];
             html += '<div class="nasabah-title"> Detail: ' + escapeHtml(item.namaNasabah) + ' (' + (item.rw || '-') + ' - ' + (item.rt || '-') + ')</div>';
             html += '<table>';
-            html += '<tr><th>No</th><th>Tanggal</th><th>Nama Sampah</th><th>Berat</th><th>Harga</th><th>Nilai</th></tr>';
+            html += '<tr><th>No</th><th>Tanggal</th><th>Nama Sampah</th><th>Berat</th><th>Harga</th><th>Nilai</th>';
+            html += '<th>📷</th><th>📸</th><th>📋</th></tr>';
             
             for (var j = 0; j < item.detail.length; j++) {
                 var d = item.detail[j];
                 
-                html += '<tr>' +
-                    '<td>' + (j + 1) + '</td>' +
-                    '<td>' + (d.tanggal ? formatTanggalIndo(d.tanggal) : '-') + '</td>' +
-                    '<td class="sampah-cell">' + escapeHtml(d.nama) + '</td>' +
-                    '<td>' + d.berat.toFixed(2) + '</td>' +
-                    '<td>' + formatRupiah(d.harga) + '</td>' +
-                    '<td>' + formatRupiah(d.nilai) + '</td>' +
-                    '</tr>';
+                html += '<tr>';
+                html += '<td>' + (j + 1) + '</td>';
+                html += '<td>' + (d.tanggal ? formatTanggalIndo(d.tanggal) : '-') + '</td>';
+                html += '<td class="sampah-cell">' + escapeHtml(d.nama) + '</td>';
+                html += '<td>' + d.berat.toFixed(2) + '</td>';
+                html += '<td>' + formatRupiah(d.harga) + '</td>';
+                html += '<td>' + formatRupiah(d.nilai) + '</td>';
+                
+                html += '<td class="foto-cell">' + (d.fotoTimbang ? '📷' : '<span class="no-foto">-</span>') + '</td>';
+                html += '<td class="foto-cell">' + (d.fotoHasil ? '📸' : '<span class="no-foto">-</span>') + '</td>';
+                html += '<td class="foto-cell">' + (d.fotoBukti ? '📋' : '<span class="no-foto">-</span>') + '</td>';
+                
+                html += '</tr>';
             }
             
             html += '<tr class="sub-total-row">' +
                 '<td colspan="5" style="text-align:right;">Sub Total ' + escapeHtml(item.namaNasabah) + '</td>' +
                 '<td>' + formatRupiah(item.totalNilai) + '</td>' +
+                '<td colspan="3"></td>' +
                 '</tr>';
             html += '</table>';
         }
@@ -719,15 +770,16 @@ function generateAdminPDFHTML(rekapData, allData, filterBSU, filterRW, filterRT,
 }
 
 // ==================== GENERATE WORD HTML ADMIN ====================
+
 function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT, periode) {
     var tglCetak = formatTanggalIndo(new Date());
     var admin = sessionStorage.getItem('adminName') || 'Admin';
     
     var totalBeratAll = 0, totalNilaiAll = 0;
     for (var i = 0; i < allData.length; i++) {
-        totalBeratAll += allData[i].berat;
-        var harga = allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama);
-        totalNilaiAll += allData[i].berat * harga;
+        totalBeratAll += allData[i].berat || 0;
+        var harga = allData[i].harga_per_kg || allData[i].hargaPerKg || getHargaByNamaSampah(allData[i].nama) || 0;
+        totalNilaiAll += (allData[i].berat || 0) * harga;
     }
     
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
@@ -751,6 +803,7 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
     html += '.sub-total-row { background: #c5cae9; font-weight: bold; }';
     html += '.sampah-cell { text-align: left; font-weight: 600; }';
     html += '.nasabah-name { text-align: left; font-weight: bold; color: #1a237e; }';
+    html += '.foto-cell { text-align: center; }';
     html += '.footer { margin-top: 15px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #ddd; padding-top: 8px; }';
     html += '.signature { margin-top: 15px; display: flex; justify-content: space-around; }';
     html += '.signature-box { text-align: center; }';
@@ -758,6 +811,7 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
     html += '.signature-box p { margin-top: 3px; font-size: 9px; }';
     html += '.page-break { page-break-after: always; }';
     html += '.grand-total { background: #1a237e; color: white; padding: 8px; text-align: center; border-radius: 4px; margin-top: 10px; font-size: 13px; }';
+    html += '.no-foto { color: #999; font-size: 8px; }';
     html += '</style>';
     html += '</head><body>';
     
@@ -800,20 +854,26 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
         html += '<div class="bsu-title"> ' + bsu + '</div>';
         
         html += '<table>';
-        html += '<tr><th>No</th><th>Nama Nasabah</th><th>RW/RT</th><th>Berat (kg)</th><th>Transaksi</th><th>Tabungan</th></tr>';
+        html += '<tr><th>No</th><th>Nama Nasabah</th><th>RW/RT</th><th>Berat (kg)</th><th>Transaksi</th><th>Tabungan</th>';
+        html += '<th>📷</th><th>📸</th><th>📋</th></tr>';
         
         var grandTotal = 0;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
             
-            html += '<tr>' +
-                '<td>' + (i + 1) + '</td>' +
-                '<td class="nasabah-name">' + escapeHtml(item.namaNasabah) + '</td>' +
-                '<td>' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</td>' +
-                '<td>' + item.totalBerat.toFixed(2) + '</td>' +
-                '<td>' + item.totalTransaksi + '</td>' +
-                '<td>' + formatRupiah(item.totalNilai) + '</td>' +
-                '</tr>';
+            html += '<tr>';
+            html += '<td>' + (i + 1) + '</td>';
+            html += '<td class="nasabah-name">' + escapeHtml(item.namaNasabah) + '</td>';
+            html += '<td>' + (item.rw || '-') + ' - ' + (item.rt || '-') + '</td>';
+            html += '<td>' + item.totalBerat.toFixed(2) + '</td>';
+            html += '<td>' + item.totalTransaksi + '</td>';
+            html += '<td>' + formatRupiah(item.totalNilai) + '</td>';
+            
+            html += '<td class="foto-cell">' + (item.fotoTimbang ? '📷' : '<span class="no-foto">-</span>') + '</td>';
+            html += '<td class="foto-cell">' + (item.fotoHasil ? '📸' : '<span class="no-foto">-</span>') + '</td>';
+            html += '<td class="foto-cell">' + (item.fotoBukti ? '📋' : '<span class="no-foto">-</span>') + '</td>';
+            
+            html += '</tr>';
             grandTotal += item.totalNilai;
             grandTotalAll += item.totalNilai;
             grandTotalBerat += item.totalBerat;
@@ -823,6 +883,7 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
         html += '<tr class="sub-total-row">' +
             '<td colspan="5" style="text-align:right;">TOTAL ' + bsu + '</td>' +
             '<td>' + formatRupiah(grandTotal) + '</td>' +
+            '<td colspan="3"></td>' +
             '</tr>';
         html += '</table>';
         
@@ -831,24 +892,31 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
             var item = items[i];
             html += '<div class="nasabah-title"> Detail: ' + escapeHtml(item.namaNasabah) + ' (' + (item.rw || '-') + ' - ' + (item.rt || '-') + ')</div>';
             html += '<table>';
-            html += '<tr><th>No</th><th>Tanggal</th><th>Nama Sampah</th><th>Berat</th><th>Harga</th><th>Nilai</th></tr>';
+            html += '<tr><th>No</th><th>Tanggal</th><th>Nama Sampah</th><th>Berat</th><th>Harga</th><th>Nilai</th>';
+            html += '<th>📷</th><th>📸</th><th>📋</th></tr>';
             
             for (var j = 0; j < item.detail.length; j++) {
                 var d = item.detail[j];
                 
-                html += '<tr>' +
-                    '<td>' + (j + 1) + '</td>' +
-                    '<td>' + (d.tanggal ? formatTanggalIndo(d.tanggal) : '-') + '</td>' +
-                    '<td class="sampah-cell">' + escapeHtml(d.nama) + '</td>' +
-                    '<td>' + d.berat.toFixed(2) + '</td>' +
-                    '<td>' + formatRupiah(d.harga) + '</td>' +
-                    '<td>' + formatRupiah(d.nilai) + '</td>' +
-                    '</tr>';
+                html += '<tr>';
+                html += '<td>' + (j + 1) + '</td>';
+                html += '<td>' + (d.tanggal ? formatTanggalIndo(d.tanggal) : '-') + '</td>';
+                html += '<td class="sampah-cell">' + escapeHtml(d.nama) + '</td>';
+                html += '<td>' + d.berat.toFixed(2) + '</td>';
+                html += '<td>' + formatRupiah(d.harga) + '</td>';
+                html += '<td>' + formatRupiah(d.nilai) + '</td>';
+                
+                html += '<td class="foto-cell">' + (d.fotoTimbang ? '📷' : '<span class="no-foto">-</span>') + '</td>';
+                html += '<td class="foto-cell">' + (d.fotoHasil ? '📸' : '<span class="no-foto">-</span>') + '</td>';
+                html += '<td class="foto-cell">' + (d.fotoBukti ? '📋' : '<span class="no-foto">-</span>') + '</td>';
+                
+                html += '</tr>';
             }
             
             html += '<tr class="sub-total-row">' +
                 '<td colspan="5" style="text-align:right;">Sub Total ' + escapeHtml(item.namaNasabah) + '</td>' +
                 '<td>' + formatRupiah(item.totalNilai) + '</td>' +
+                '<td colspan="3"></td>' +
                 '</tr>';
             html += '</table>';
         }
@@ -878,9 +946,9 @@ function generateAdminWordHTML(rekapData, allData, filterBSU, filterRW, filterRT
 }
 
 // ==================== DOWNLOAD FUNCTIONS ====================
+
 function downloadExcel(html, filename) {
     try {
-        // Tambahkan BOM untuk UTF-8
         var blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
         var link = document.createElement('a');
         var url = URL.createObjectURL(blob);
@@ -893,7 +961,6 @@ function downloadExcel(html, filename) {
         showToast('✅ ' + filename + ' berhasil didownload!', false);
         return true;
     } catch(e) {
-        // Fallback
         try {
             var encoded = encodeURIComponent(html);
             var dataUrl = 'data:application/vnd.ms-excel;charset=utf-8,' + encoded;
@@ -931,188 +998,136 @@ function downloadWord(html, filename) {
     }
 }
 
-// ==================== EKSPOR LAPORAN ADMIN ====================
+// ==================== EKSPOR LAPORAN ====================
 
-// --- EKSPOR LAPORAN FULL EXCEL ---
-function exportAdminLaporanExcelFull() {
-    var data = daftarSampah || [];
+// --- EKSPOR LAPORAN FULL ---
+window.exportAdminLaporanExcelFull = function() {
+    var data = window.daftarSampah || [];
     var filterBSU = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
     var filterRW = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
     var filterRT = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
     
-    if (filterBSU !== 'all') {
-        data = data.filter(function(item) { return item.bsuId === filterBSU || item.bsu === filterBSU; });
-    }
-    if (filterRW !== 'all') {
-        data = data.filter(function(item) { return item.rw === filterRW; });
-    }
-    if (filterRT !== 'all') {
-        data = data.filter(function(item) { return item.rt === filterRT; });
-    }
+    var filtered = filterDataByFilters(data, filterBSU, filterRW, filterRT);
     
-    if (data.length === 0) {
+    if (filtered.length === 0) {
         showToast('Tidak ada data untuk diekspor!', true);
         return;
     }
     
-    var rekapData = generateRekapPerNasabahAdmin(data);
-    var html = generateAdminExcelHTML(rekapData, data, filterBSU, filterRW, filterRT, 'Laporan Full');
+    var rekapData = generateRekapPerNasabahAdmin(filtered);
+    var html = generateAdminExcelHTML(rekapData, filtered, filterBSU, filterRW, filterRT, 'Laporan Full');
     downloadExcel(html, 'Laporan_Admin_Bank_Sampah.xls');
-}
+};
 
 // --- MINGGUAN ---
-function exportLaporanMingguanExcel() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminExcelHTML(rekapData, filtered, bsu, rw, rt, 'Mingguan');
+window.exportLaporanMingguanExcel = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanMingguanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminExcelHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Mingguan');
     downloadExcel(html, 'Laporan_Mingguan_Admin.xls');
-}
+};
 
-function exportLaporanMingguanPDF() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminPDFHTML(rekapData, filtered, bsu, rw, rt, 'Mingguan');
+window.exportLaporanMingguanPDF = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanMingguanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminPDFHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Mingguan');
     var printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { showToast('Popup diblokir! Silakan izinkan popup.', true); return; }
     printWindow.document.write(html);
     printWindow.document.close();
     setTimeout(function() { printWindow.focus(); printWindow.print(); }, 500);
     showToast('Laporan Mingguan PDF siap dicetak', false);
-}
+};
 
-function exportLaporanMingguanWord() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminWordHTML(rekapData, filtered, bsu, rw, rt, 'Mingguan');
+window.exportLaporanMingguanWord = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanMingguanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminWordHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Mingguan');
     downloadWord(html, 'Laporan_Mingguan_Admin.doc');
-}
+};
 
 // --- BULANAN ---
-function exportLaporanBulananExcel() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminExcelHTML(rekapData, filtered, bsu, rw, rt, 'Bulanan');
+window.exportLaporanBulananExcel = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanBulananAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminExcelHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Bulanan');
     downloadExcel(html, 'Laporan_Bulanan_Admin.xls');
-}
+};
 
-function exportLaporanBulananPDF() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminPDFHTML(rekapData, filtered, bsu, rw, rt, 'Bulanan');
+window.exportLaporanBulananPDF = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanBulananAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminPDFHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Bulanan');
     var printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { showToast('Popup diblokir! Silakan izinkan popup.', true); return; }
     printWindow.document.write(html);
     printWindow.document.close();
     setTimeout(function() { printWindow.focus(); printWindow.print(); }, 500);
     showToast('Laporan Bulanan PDF siap dicetak', false);
-}
+};
 
-function exportLaporanBulananWord() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminWordHTML(rekapData, filtered, bsu, rw, rt, 'Bulanan');
+window.exportLaporanBulananWord = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanBulananAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminWordHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Bulanan');
     downloadWord(html, 'Laporan_Bulanan_Admin.doc');
-}
+};
 
 // --- TAHUNAN ---
-function exportLaporanTahunanExcel() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminExcelHTML(rekapData, filtered, bsu, rw, rt, 'Tahunan');
+window.exportLaporanTahunanExcel = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanTahunanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminExcelHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Tahunan');
     downloadExcel(html, 'Laporan_Tahunan_Admin.xls');
-}
+};
 
-function exportLaporanTahunanPDF() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminPDFHTML(rekapData, filtered, bsu, rw, rt, 'Tahunan');
+window.exportLaporanTahunanPDF = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanTahunanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminPDFHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Tahunan');
     var printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { showToast('Popup diblokir! Silakan izinkan popup.', true); return; }
     printWindow.document.write(html);
     printWindow.document.close();
     setTimeout(function() { printWindow.focus(); printWindow.print(); }, 500);
     showToast('Laporan Tahunan PDF siap dicetak', false);
-}
+};
 
-function exportLaporanTahunanWord() {
-    var data = daftarSampah || [];
-    var bsu = document.getElementById('filterBSU') ? document.getElementById('filterBSU').value : 'all';
-    var rw = document.getElementById('filterRW') ? document.getElementById('filterRW').value : 'all';
-    var rt = document.getElementById('filterRT') ? document.getElementById('filterRT').value : 'all';
-    
-    var filtered = filterDataByFilters(data, bsu, rw, rt);
-    if (filtered.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
-    
-    var rekapData = generateRekapPerNasabahAdmin(filtered);
-    var html = generateAdminWordHTML(rekapData, filtered, bsu, rw, rt, 'Tahunan');
+window.exportLaporanTahunanWord = function() {
+    var data = window.daftarSampah || [];
+    var laporan = generateLaporanTahunanAdmin(data, currentFilterBSU, currentFilterRW, currentFilterRT);
+    if (laporan.data.length === 0) { showToast('Tidak ada data untuk periode ini!', true); return; }
+    var rekapData = generateRekapPerNasabahAdmin(laporan.data);
+    var html = generateAdminWordHTML(rekapData, laporan.data, currentFilterBSU, currentFilterRW, currentFilterRT, 'Tahunan');
     downloadWord(html, 'Laporan_Tahunan_Admin.doc');
-}
+};
 
 // ==================== REKAP NASABAH ADMIN ====================
-function exportAdminNasabahRekap() {
-    var data = daftarSampah || [];
+
+window.exportAdminNasabahRekap = function() {
+    var data = window.daftarSampah || [];
     if (data.length === 0) { showToast('Tidak ada data untuk diekspor!', true); return; }
     
     var nasabahMap = {};
     for (var i = 0; i < data.length; i++) {
         var item = data[i];
-        var nama = item.namaNasabah || '-';
+        var nama = item.nama_nasabah || item.namaNasabah || '-';
         if (nama === '-' || nama === 'undefined' || nama === 'null') continue;
         if (!nasabahMap[nama]) {
             nasabahMap[nama] = {
@@ -1122,14 +1137,20 @@ function exportAdminNasabahRekap() {
                 totalTransaksi: 0,
                 bsu: item.bsu || '-',
                 rw: item.rw || '-',
-                rt: item.rt || '-'
+                rt: item.rt || '-',
+                fotoTimbang: null,
+                fotoHasil: null,
+                fotoBukti: null
             };
         }
-        var harga = item.hargaPerKg || getHargaByNamaSampah(item.nama);
-        var nilai = item.berat * harga;
-        nasabahMap[nama].totalBerat += item.berat;
+        var harga = item.harga_per_kg || item.hargaPerKg || getHargaByNamaSampah(item.nama) || 0;
+        var nilai = (item.berat || 0) * harga;
+        nasabahMap[nama].totalBerat += item.berat || 0;
         nasabahMap[nama].totalNilai += nilai;
         nasabahMap[nama].totalTransaksi++;
+        if (item.foto_timbang) nasabahMap[nama].fotoTimbang = item.foto_timbang;
+        if (item.foto_hasil) nasabahMap[nama].fotoHasil = item.foto_hasil;
+        if (item.foto_bukti) nasabahMap[nama].fotoBukti = item.foto_bukti;
     }
     
     var rekapData = Object.values(nasabahMap);
@@ -1151,6 +1172,9 @@ function exportAdminNasabahRekap() {
     html += 'td { padding: 4px 6px; border: 1px solid #ddd; text-align: center; font-size: 9px; vertical-align: middle; }';
     html += '.total-row { background: #e8f5e9; font-weight: bold; }';
     html += '.nasabah-name { text-align: left; font-weight: bold; color: #1a237e; }';
+    html += '.foto-cell { text-align: center; width: 40px; }';
+    html += '.foto-img { max-width: 35px; max-height: 35px; width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }';
+    html += '.no-foto { color: #999; font-size: 8px; }';
     html += '.grand-total { background: #1a237e; color: white; padding: 8px; text-align: center; margin-top: 8px; font-size: 12px; }';
     html += '.footer { text-align: center; font-size: 8px; color: #999; padding: 8px; border-top: 1px solid #ddd; margin-top: 8px; }';
     html += '</style>';
@@ -1159,31 +1183,56 @@ function exportAdminNasabahRekap() {
     html += '<div class="main-title"> REKAP SEMUA NASABAH</div>';
     html += '<div class="sub-title">Bank Sampah Digital - BSI Mandiri | Periode: ' + formatTanggalIndo(new Date()) + '</div>';
     html += '<table>';
-    html += '<tr><th>No</th><th>Nama Nasabah</th><th>BSU</th><th>RW/RT</th><th>Total Berat</th><th>Total Transaksi</th><th>Total Tabungan</th></tr>';
+    html += '<tr><th>No</th><th>Nama Nasabah</th><th>BSU</th><th>RW/RT</th><th>Total Berat</th><th>Total Transaksi</th><th>Total Tabungan</th>';
+    html += '<th>📷</th><th>📸</th><th>📋</th></tr>';
     
     var grandTotalNilai = 0, grandTotalBerat = 0, grandTotalTransaksi = 0;
     for (var i = 0; i < rekapData.length; i++) {
         var n = rekapData[i];
+        
         html += '<tr><td>' + (i + 1) + '</td>';
         html += '<td class="nasabah-name">' + escapeHtml(n.nama) + '</td>';
         html += '<td>' + escapeHtml(n.bsu) + '</td>';
         html += '<td>' + n.rw + ' - ' + n.rt + '</td>';
         html += '<td>' + n.totalBerat.toFixed(2) + ' kg</td>';
         html += '<td>' + n.totalTransaksi + '</td>';
-        html += '<td style="font-weight:bold;color:#1a237e;">' + formatRupiah(n.totalNilai) + '</td></tr>';
+        html += '<td style="font-weight:bold;color:#1a237e;">' + formatRupiah(n.totalNilai) + '</td>';
+        
+        // Foto Timbang
+        if (n.fotoTimbang) {
+            html += '<td class="foto-cell"><img src="' + n.fotoTimbang + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
+        } else {
+            html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
+        }
+        
+        // Foto Hasil
+        if (n.fotoHasil) {
+            html += '<td class="foto-cell"><img src="' + n.fotoHasil + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
+        } else {
+            html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
+        }
+        
+        // Foto Bukti
+        if (n.fotoBukti) {
+            html += '<td class="foto-cell"><img src="' + n.fotoBukti + '" class="foto-img" onerror="this.parentElement.innerHTML=\'<span class=no-foto>-</span>\'"></td>';
+        } else {
+            html += '<td class="foto-cell"><span class="no-foto">-</span></td>';
+        }
+        
+        html += '</tr>';
         grandTotalNilai += n.totalNilai;
         grandTotalBerat += n.totalBerat;
         grandTotalTransaksi += n.totalTransaksi;
     }
     
-    html += '<tr class="total-row"><td colspan="6" style="text-align:right;">GRAND TOTAL</td><td>' + formatRupiah(grandTotalNilai) + '</td></tr>';
+    html += '<tr class="total-row"><td colspan="6" style="text-align:right;">GRAND TOTAL</td><td>' + formatRupiah(grandTotalNilai) + '</td><td colspan="3"></td></tr>';
     html += '</table>';
     html += '<div class="grand-total">Total Berat: ' + grandTotalBerat.toFixed(2) + ' kg | Total Transaksi: ' + grandTotalTransaksi + '</div>';
     html += '<div class="footer">Dicetak: ' + formatTanggalIndo(new Date()) + ' | Bank Sampah Digital</div>';
     html += '</body></html>';
     
     downloadExcel(html, 'Rekap_Semua_Nasabah.xls');
-}
+};
 
 // ==================== EXPORT KE GLOBAL ====================
 window.exportAdminLaporanExcelFull = exportAdminLaporanExcelFull;
@@ -1199,11 +1248,5 @@ window.exportLaporanTahunanWord = exportLaporanTahunanWord;
 window.exportAdminNasabahRekap = exportAdminNasabahRekap;
 window.downloadExcel = downloadExcel;
 window.downloadWord = downloadWord;
-window.generateAdminExcelHTML = generateAdminExcelHTML;
-window.generateAdminPDFHTML = generateAdminPDFHTML;
-window.generateAdminWordHTML = generateAdminWordHTML;
-window.generateRekapPerNasabahAdmin = generateRekapPerNasabahAdmin;
-window.generateRekapPerSampah = generateRekapPerSampah;
-window.filterDataByFilters = filterDataByFilters;
 
-console.log('✅ Laporan Admin dengan semua fungsi download loaded!');
+console.log('✅ Laporan Admin - Ukuran foto diperkecil (max 40x40px)');

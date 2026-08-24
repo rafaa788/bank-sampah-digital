@@ -132,11 +132,16 @@ async function getNasabahByBSU(bsuId) {
 
 async function createNasabah(nasabah) {
     try {
+        console.log('💾 createNasabah called with:', nasabah);
         const { data, error } = await supabase
             .from('nasabah')
             .insert([nasabah])
             .select();
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+        console.log('✅ Nasabah created:', data);
         return data ? data[0] : null;
     } catch (e) {
         console.error('❌ Error createNasabah:', e.message);
@@ -167,6 +172,7 @@ async function getTransaksi() {
             .select('*')
             .order('created_at', { ascending: false });
         if (error) throw error;
+        console.log('📥 getTransaksi returned:', data?.length || 0, 'records');
         return data || [];
     } catch (e) {
         console.error('❌ Error getTransaksi:', e.message);
@@ -223,11 +229,44 @@ async function getTransaksiByNasabah(nasabahId) {
 
 async function createTransaksi(transaksi) {
     try {
+        console.log('💾 createTransaksi called with:', transaksi);
+        
+        // Pastikan semua field yang diperlukan ada
+        const dataToInsert = {
+            id: transaksi.id || 'trans_' + Date.now(),
+            nama: transaksi.nama || 'Sampah',
+            jenis: transaksi.jenis || 'nonorganik',
+            berat: parseFloat(transaksi.berat) || 0,
+            harga_per_kg: parseFloat(transaksi.harga_per_kg) || 0,
+            bsu: transaksi.bsu || 'BSU',
+            bsu_id: transaksi.bsu_id || 'bsu_mede1',
+            rw: transaksi.rw || 'RW01',
+            rt: transaksi.rt || 'RT01',
+            ketua: transaksi.ketua || 'Ketua BSU',
+            nama_nasabah: transaksi.nama_nasabah || 'Unknown',
+            nasabah_id: transaksi.nasabah_id || 'nasabah_unknown',
+            status: transaksi.status || 'menunggu',
+            tanggal: transaksi.tanggal || new Date().toISOString().split('T')[0],
+            foto_timbang: transaksi.foto_timbang || null,
+            foto_hasil: transaksi.foto_hasil || null,
+            foto_bukti: transaksi.foto_bukti || null,
+            created_at: transaksi.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        
+        console.log('📦 Data to insert:', dataToInsert);
+        
         const { data, error } = await supabase
             .from('transaksi')
-            .insert([transaksi])
+            .insert([dataToInsert])
             .select();
-        if (error) throw error;
+            
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Transaksi created:', data);
         return data ? data[0] : null;
     } catch (e) {
         console.error('❌ Error createTransaksi:', e.message);
@@ -237,12 +276,14 @@ async function createTransaksi(transaksi) {
 
 async function updateTransaksi(id, data) {
     try {
+        console.log('🔄 updateTransaksi:', id, data);
         const { data: result, error } = await supabase
             .from('transaksi')
             .update(data)
             .eq('id', id)
             .select();
         if (error) throw error;
+        console.log('✅ Transaksi updated:', result);
         return result ? result[0] : null;
     } catch (e) {
         console.error('❌ Error updateTransaksi:', e.message);
@@ -295,7 +336,7 @@ async function subscribeToTransaksi(callback) {
                 table: 'transaksi'
             },
             (payload) => {
-                console.log('🔄 Transaksi berubah:', payload.eventType);
+                console.log('🔄 Transaksi berubah:', payload.eventType, payload.new);
                 if (callback) callback(payload);
                 if (window._onTransaksiChange) {
                     window._onTransaksiChange(payload);

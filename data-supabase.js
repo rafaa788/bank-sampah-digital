@@ -86,7 +86,6 @@ async function syncHargaSampah() {
         if (window.db && window.db.getHargaSampah) {
             const data = await window.db.getHargaSampah();
             if (data && data.length > 0) {
-                // Reset data
                 window.hargaSampahDetail = {};
                 window.presetSampah = { plastik: [], logam: [], kertas: [] };
                 
@@ -211,7 +210,6 @@ function getHargaByNamaSampah(nama) {
     if (window.hargaSampahDetail && window.hargaSampahDetail[nama]) {
         return window.hargaSampahDetail[nama];
     }
-    // Cari partial match
     var namaLower = nama.toLowerCase();
     for (var key in window.hargaSampahDetail) {
         if (namaLower.includes(key.toLowerCase()) || key.toLowerCase().includes(namaLower)) {
@@ -299,25 +297,26 @@ async function tambahTransaksi(data) {
     
     var newId = data.id || 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     
-    var bsu = getBSUById(data.bsuId) || getBSUById(data.bsu_id);
+    var bsu = getBSUById(data.bsu_id) || getBSUById(data.bsuId);
     console.log('🔍 BSU ditemukan:', bsu ? bsu.nama : 'TIDAK DITEMUKAN');
     
     var ketuaBSU = bsu ? bsu.ketua : (data.ketua || 'Ketua BSU');
     
+    // PASTIKAN DATA SESUAI DENGAN STRUKTUR TABEL
     var transaksi = {
         id: newId,
         nama: data.nama || 'Sampah',
         jenis: data.jenis || 'nonorganik',
         berat: parseFloat(data.berat) || 0,
-        harga_per_kg: data.hargaPerKg || data.harga_per_kg || getHargaByNamaSampah(data.nama),
+        harga_per_kg: parseFloat(data.harga_per_kg || data.hargaPerKg || getHargaByNamaSampah(data.nama) || 2000),
         bsu: data.bsu || (bsu ? bsu.nama : 'BSU'),
-        bsu_id: data.bsuId || data.bsu_id || 'bsu_mede1',
+        bsu_id: data.bsu_id || data.bsuId || 'bsu_mede1',
         rw: data.rw || (bsu ? bsu.rw : 'RW01'),
         rt: data.rt || (bsu ? bsu.rt : 'RT01'),
         ketua: ketuaBSU,
-        nama_nasabah: data.namaNasabah || data.nama_nasabah || 'Unknown',
-        nasabah_id: data.nasabahId || data.nasabah_id || 'nasabah_unknown',
-        status: data.status || 'menunggu',
+        nama_nasabah: data.nama_nasabah || data.namaNasabah || 'Unknown',
+        nasabah_id: data.nasabah_id || data.nasabahId || 'nasabah_unknown',
+        status: 'menunggu',
         tanggal: data.tanggal || new Date().toISOString().split('T')[0],
         created_at: data.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -334,6 +333,7 @@ async function tambahTransaksi(data) {
             const saved = await window.db.createTransaksi(transaksi);
             if (saved) {
                 console.log('✅ Transaksi tersimpan di Supabase:', saved);
+                if (!window.daftarSampah) window.daftarSampah = [];
                 window.daftarSampah.unshift(saved);
                 if (window._onTransaksiChange) {
                     window._onTransaksiChange({ eventType: 'INSERT', new: saved });
@@ -437,6 +437,7 @@ async function createNasabahOtomatis(username, password, nama) {
         if (window.db && window.db.createNasabah) {
             const saved = await window.db.createNasabah(newNasabah);
             if (saved) {
+                if (!window.daftarNasabah) window.daftarNasabah = [];
                 window.daftarNasabah.push(saved);
                 return saved;
             }
@@ -445,6 +446,7 @@ async function createNasabahOtomatis(username, password, nama) {
         console.error('❌ Gagal buat nasabah:', e.message);
     }
     
+    if (!window.daftarNasabah) window.daftarNasabah = [];
     window.daftarNasabah.push(newNasabah);
     return newNasabah;
 }

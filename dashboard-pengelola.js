@@ -34,7 +34,6 @@ function renderPengelola() {
     var inputKetuaHidden = document.getElementById('inputKetua');
     if (inputKetuaHidden) inputKetuaHidden.value = pengelolaAktif.ketua;
     
-    // Update semua data
     updateSaldoBSU();
     renderStatistik();
     renderRekapTransaksi();
@@ -44,7 +43,6 @@ function renderPengelola() {
     setupFotoPreview();
     updateBottomNav('dashboard');
     
-    // Setup realtime jika belum
     if (!pengelolaRealtimeSetup) {
         setupPengelolaRealtime();
     }
@@ -69,7 +67,6 @@ function switchPengelolaTab(tab) {
     var activeContent = document.getElementById('pengelola-' + tab);
     if (activeContent) activeContent.classList.add('active');
     
-    // Refresh data sesuai tab
     if (tab === 'dashboard') {
         renderStatistik();
         renderRekapTransaksi();
@@ -107,11 +104,29 @@ function updateBottomNav(activeTab) {
 }
 
 // =============================================
-// SUBMIT DATA SAMPAH - PERBAIKAN TOTAL
+// FUNGSI KONVERSI FILE KE BASE64
+// =============================================
+
+function fileToBase64(file) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            resolve(e.target.result);
+        };
+        reader.onerror = function(e) {
+            reject(e);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// =============================================
+// SUBMIT DATA SAMPAH - PERBAIKAN LENGKAP
 // =============================================
 
 async function submitDataSampah() {
     console.log('📝 Submit data sampah dimulai...');
+    showLoading(true);
     
     try {
         var namaNasabahInput = document.getElementById('inputNamaNasabahManual');
@@ -121,6 +136,7 @@ async function submitDataSampah() {
         
         if (!namaNasabahInput) {
             showToast('⚠️ Error form, refresh halaman!', true);
+            showLoading(false);
             return;
         }
         
@@ -135,14 +151,17 @@ async function submitDataSampah() {
         if (!namaNasabah) {
             showToast('⚠️ Masukkan nama nasabah!', true);
             namaNasabahInput.focus();
+            showLoading(false);
             return;
         }
         if (!nama) {
             showToast('⚠️ Pilih nama sampah!', true);
+            showLoading(false);
             return;
         }
         if (!berat || berat <= 0) {
             showToast('⚠️ Masukkan berat yang valid!', true);
+            showLoading(false);
             return;
         }
         
@@ -150,10 +169,27 @@ async function submitDataSampah() {
         var harga = getHargaByNamaSampah(nama);
         var bsu = getBSUById(pengelolaAktif.bsuId);
         
-        // Ambil foto
-        var fotoTimbang = document.getElementById('fotoTimbang')?.files[0];
-        var fotoHasil = document.getElementById('fotoHasil')?.files[0];
-        var fotoBukti = document.getElementById('fotoBukti')?.files[0];
+        // ===== AMBIL FOTO - KONVERSI KE BASE64 =====
+        var fotoTimbangFile = document.getElementById('fotoTimbang')?.files[0];
+        var fotoHasilFile = document.getElementById('fotoHasil')?.files[0];
+        var fotoBuktiFile = document.getElementById('fotoBukti')?.files[0];
+        
+        var fotoTimbangBase64 = null;
+        var fotoHasilBase64 = null;
+        var fotoBuktiBase64 = null;
+        
+        if (fotoTimbangFile) {
+            fotoTimbangBase64 = await fileToBase64(fotoTimbangFile);
+            console.log('📸 Foto timbang siap, size:', fotoTimbangBase64.length);
+        }
+        if (fotoHasilFile) {
+            fotoHasilBase64 = await fileToBase64(fotoHasilFile);
+            console.log('📸 Foto hasil siap, size:', fotoHasilBase64.length);
+        }
+        if (fotoBuktiFile) {
+            fotoBuktiBase64 = await fileToBase64(fotoBuktiFile);
+            console.log('📸 Foto bukti siap, size:', fotoBuktiBase64.length);
+        }
         
         // ===== CEK NASABAH =====
         var finalNasabahId = null;
@@ -161,9 +197,10 @@ async function submitDataSampah() {
         var nasabahList = window.daftarNasabah || [];
         
         for (var i = 0; i < nasabahList.length; i++) {
-            if (nasabahList[i].nama && nasabahList[i].nama.toLowerCase() === namaNasabah.toLowerCase() && 
-                (nasabahList[i].bsu_id === pengelolaAktif.bsuId || nasabahList[i].bsuId === pengelolaAktif.bsuId)) {
-                existingNasabah = nasabahList[i];
+            var n = nasabahList[i];
+            if (n.nama && n.nama.toLowerCase() === namaNasabah.toLowerCase() && 
+                (n.bsu_id === pengelolaAktif.bsuId || n.bsuId === pengelolaAktif.bsuId)) {
+                existingNasabah = n;
                 break;
             }
         }
@@ -177,7 +214,7 @@ async function submitDataSampah() {
             var newNasabah = {
                 id: newId,
                 nama: namaNasabah,
-                username: 'auto_' + Date.now(),
+                username: 'auto_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                 password: 'auto_' + Math.random().toString(36).substr(2, 4),
                 bsu_id: pengelolaAktif.bsuId,
                 rw: bsu ? bsu.rw : pengelolaAktif.rw,
@@ -189,7 +226,6 @@ async function submitDataSampah() {
             };
             
             try {
-                // SIMPAN KE SUPABASE
                 if (window.db && window.db.createNasabah) {
                     console.log('💾 Menyimpan nasabah ke Supabase...');
                     const saved = await window.db.createNasabah(newNasabah);
@@ -202,7 +238,6 @@ async function submitDataSampah() {
                         throw new Error('Gagal menyimpan nasabah');
                     }
                 } else {
-                    // Fallback lokal
                     console.warn('⚠️ db.createNasabah tidak tersedia, simpan lokal');
                     if (!window.daftarNasabah) window.daftarNasabah = [];
                     window.daftarNasabah.push(newNasabah);
@@ -211,41 +246,40 @@ async function submitDataSampah() {
             } catch (error) {
                 console.error('❌ Gagal buat nasabah:', error);
                 showToast('⚠️ Gagal membuat nasabah: ' + error.message, true);
+                showLoading(false);
                 return;
             }
         }
         
         // ===== BUAT TRANSAKSI =====
         var transId = 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        var data = {
+        var transaksiData = {
             id: transId,
             nama: nama,
             jenis: jenis || 'nonorganik',
             berat: berat,
-            hargaPerKg: harga,
             harga_per_kg: harga,
             bsu: pengelolaAktif.namaBSU,
-            bsuId: pengelolaAktif.bsuId,
             bsu_id: pengelolaAktif.bsuId,
             rw: bsu ? bsu.rw : pengelolaAktif.rw,
             rt: bsu ? bsu.rt : pengelolaAktif.rt,
             ketua: ketuaBSU,
-            namaNasabah: namaNasabah,
             nama_nasabah: namaNasabah,
-            nasabahId: finalNasabahId,
             nasabah_id: finalNasabahId,
             status: 'menunggu',
             tanggal: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
-            foto_timbang: fotoTimbang ? URL.createObjectURL(fotoTimbang) : null,
-            foto_hasil: fotoHasil ? URL.createObjectURL(fotoHasil) : null,
-            foto_bukti: fotoBukti ? URL.createObjectURL(fotoBukti) : null
+            updated_at: new Date().toISOString(),
+            foto_timbang: fotoTimbangBase64,
+            foto_hasil: fotoHasilBase64,
+            foto_bukti: fotoBuktiBase64
         };
         
-        console.log('📦 Data transaksi:', data);
+        console.log('📦 Data transaksi (status menunggu):', transaksiData);
         
         if (typeof tambahTransaksi !== 'function') {
             showToast('⚠️ Error sistem, refresh halaman!', true);
+            showLoading(false);
             return;
         }
         
@@ -253,7 +287,7 @@ async function submitDataSampah() {
         
         // ===== SIMPAN TRANSAKSI =====
         try {
-            const result = await tambahTransaksi(data);
+            const result = await tambahTransaksi(transaksiData);
             console.log('✅ Transaksi berhasil disimpan:', result);
             
             // Reset form
@@ -286,6 +320,8 @@ async function submitDataSampah() {
     } catch (error) {
         console.error('❌ Error:', error);
         showToast('⚠️ Terjadi kesalahan: ' + error.message, true);
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -346,7 +382,7 @@ function renderStatistik() {
     
     for (var i = 0; i < transaksi.length; i++) {
         var t = transaksi[i];
-        var harga = t.hargaPerKg || t.harga_per_kg || 0;
+        var harga = t.harga_per_kg || t.hargaPerKg || 0;
         var berat = t.berat || 0;
         
         if (t.status === 'diverifikasi') {
@@ -397,16 +433,16 @@ function renderRekapTransaksi() {
     
     for (var i = 0; i < rekap.length; i++) {
         var item = rekap[i];
-        var nasabah = getNasabahById(item.nasabahId || item.nasabah_id);
-        var nilai = (item.berat || 0) * (item.hargaPerKg || item.harga_per_kg || 0);
+        var nasabah = getNasabahById(item.nasabah_id || item.nasabahId);
+        var nilai = (item.berat || 0) * (item.harga_per_kg || item.hargaPerKg || 0);
         
         html += '<div class="list-item">';
         html += '  <div class="list-left">';
         html += '    <div class="avatar" style="width:28px;height:28px;font-size:10px;background:#dcfce7;color:#15803d;">' + (nasabah ? nasabah.nama.charAt(0) : '?') + '</div>';
         html += '    <div>';
-        html += '      <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : item.namaNasabah || item.nama_nasabah || 'Unknown') + '</div>';
+        html += '      <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : item.nama_nasabah || 'Unknown') + '</div>';
         html += '      <div style="font-size:9px;color:#64748b;">' + (item.nama || 'Sampah') + ' | ' + (item.tanggal || '-') + '</div>';
-        html += '      <div style="font-size:8px;color:#94a3b8;">Berat: ' + (item.berat || 0).toFixed(1) + ' kg | Rp ' + formatRupiah(item.hargaPerKg || item.harga_per_kg || 0) + '/kg</div>';
+        html += '      <div style="font-size:8px;color:#94a3b8;">Berat: ' + (item.berat || 0).toFixed(1) + ' kg | Rp ' + formatRupiah(item.harga_per_kg || item.hargaPerKg || 0) + '/kg</div>';
         html += '      <div style="font-size:8px;color:#94a3b8;">👤 Ketua: ' + (item.ketua || '-') + '</div>';
         html += '    </div>';
         html += '  </div>';
@@ -431,7 +467,7 @@ function updateSaldoBSU() {
     for (var i = 0; i < transaksi.length; i++) {
         var t = transaksi[i];
         if (t.status === 'diverifikasi') {
-            totalSaldo += (t.berat || 0) * (t.hargaPerKg || t.harga_per_kg || 0);
+            totalSaldo += (t.berat || 0) * (t.harga_per_kg || t.hargaPerKg || 0);
         }
     }
     
@@ -459,18 +495,18 @@ function renderSetoranPengelola() {
     
     for (var i = 0; i < limit; i++) {
         var item = transaksi[i];
-        var nasabah = getNasabahById(item.nasabahId || item.nasabah_id);
+        var nasabah = getNasabahById(item.nasabah_id || item.nasabahId);
         var statusClass = item.status === 'diverifikasi' ? 'badge-success' : 
                          (item.status === 'ditolak' ? 'badge-danger' : 'badge-pending');
         var statusLabel = item.status === 'diverifikasi' ? 'Diverifikasi' :
                          (item.status === 'ditolak' ? 'Ditolak' : 'Menunggu');
-        var nilai = (item.berat || 0) * (item.hargaPerKg || item.harga_per_kg || 0);
+        var nilai = (item.berat || 0) * (item.harga_per_kg || item.hargaPerKg || 0);
         
         html += '<div class="list-item">';
         html += '  <div class="list-left">';
         html += '    <div class="avatar" style="width:28px;height:28px;font-size:10px;">' + (nasabah ? nasabah.nama.charAt(0) : '?') + '</div>';
         html += '    <div>';
-        html += '      <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : item.namaNasabah || item.nama_nasabah || 'Unknown') + '</div>';
+        html += '      <div style="font-size:11px;font-weight:600;">' + (nasabah ? nasabah.nama : item.nama_nasabah || 'Unknown') + '</div>';
         html += '      <div style="font-size:9px;color:#64748b;">' + (item.nama || 'Sampah').substring(0, 25) + ' | ' + (item.tanggal || '-') + '</div>';
         html += '      <div style="font-size:8px;color:#94a3b8;">👤 Ketua: ' + (item.ketua || pengelolaAktif.ketua) + '</div>';
         html += '    </div>';
