@@ -328,15 +328,10 @@ function renderVerifikasiAdmin() {
     var container = document.getElementById('adminVerifikasiList');
     if (!container) return;
     
-    var semuaTransaksi = window.daftarSampah || [];
-    console.log('📋 Total transaksi di cache:', semuaTransaksi.length);
+    var transaksi = window.daftarSampah || [];
+    console.log('📋 Total transaksi di cache:', transaksi.length);
     
-    var statusFilter = document.getElementById('adminStatusFilter')?.value || 'menunggu';
-    var daftarTampil = statusFilter === 'all' ? semuaTransaksi : semuaTransaksi.filter(function(item) {
-        return item.status === statusFilter;
-    });
-    
-    var menunggu = semuaTransaksi.filter(function(item) {
+    var menunggu = transaksi.filter(function(item) {
         return item.status === 'menunggu';
     });
     
@@ -345,18 +340,19 @@ function renderVerifikasiAdmin() {
     var countEl = document.getElementById('adminVerifikasiCount');
     if (countEl) countEl.textContent = 'Menunggu: ' + menunggu.length;
     
-    if (daftarTampil.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Tidak ada data pada status ini</p></div>';
+    if (menunggu.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-check-circle"></i><p>Tidak ada data menunggu verifikasi</p></div>';
         return;
     }
     
     var html = '';
-    for (var i = 0; i < daftarTampil.length; i++) {
-        var item = daftarTampil[i];
+    for (var i = 0; i < menunggu.length; i++) {
+        var item = menunggu[i];
         var harga = item.harga_per_kg || item.hargaPerKg || 0;
         var nilai = (item.berat || 0) * harga;
         var nasabah = getNasabahById(item.nasabah_id) || getNasabahById(item.nasabahId);
         
+        // Cek ketersediaan foto
         var hasFotoTimbang = item.foto_timbang && item.foto_timbang !== 'null' && item.foto_timbang !== '';
         var hasFotoHasil = item.foto_hasil && item.foto_hasil !== 'null' && item.foto_hasil !== '';
         var hasFotoBukti = item.foto_bukti && item.foto_bukti !== 'null' && item.foto_bukti !== '';
@@ -365,11 +361,6 @@ function renderVerifikasiAdmin() {
         if (hasFotoTimbang) fotoCount++;
         if (hasFotoHasil) fotoCount++;
         if (hasFotoBukti) fotoCount++;
-        
-        var statusLabel = item.status === 'diverifikasi' ? 'Diterima' :
-            (item.status === 'ditolak' ? 'Ditolak' : 'Menunggu');
-        var statusClass = item.status === 'diverifikasi' ? 'badge-success' :
-            (item.status === 'ditolak' ? 'badge-danger' : 'badge-pending');
         
         html += '<div class="list-item" style="flex-direction:column;align-items:stretch;margin-bottom:12px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:white;">';
         
@@ -392,7 +383,7 @@ function renderVerifikasiAdmin() {
         html += '    <div style="text-align:right;flex-shrink:0;">';
         html += '      <div style="font-size:13px;font-weight:700;color:#0d9488;">Rp ' + formatRupiah(nilai) + '</div>';
         html += '      <div style="font-size:9px;color:#64748b;">' + (item.berat || 0) + ' kg</div>';
-        html += '      <span class="badge ' + statusClass + '" style="font-size:8px;padding:2px 8px;">' + statusLabel + '</span>';
+        html += '      <span class="badge badge-pending" style="font-size:8px;padding:2px 8px;">⏳ Menunggu</span>';
         html += '    </div>';
         html += '  </div>';
         
@@ -441,14 +432,12 @@ function renderVerifikasiAdmin() {
         
         // ===== TOMBOL AKSI =====
         html += '  <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid #f1f5f9;padding-top:8px;flex-wrap:wrap;">';
-        if (item.status === 'menunggu') {
-            html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#16a34a;color:white;display:flex;align-items:center;gap:3px;">';
-            html += '      <i class="fa-solid fa-check"></i> Terima';
-            html += '    </button>';
-            html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#dc2626;color:white;display:flex;align-items:center;gap:3px;">';
-            html += '      <i class="fa-solid fa-xmark"></i> Tolak';
-            html += '    </button>';
-        }
+        html += '    <button class="btn-verifikasi terima" onclick="verifikasiSampah(\'' + item.id + '\',\'diverifikasi\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#16a34a;color:white;display:flex;align-items:center;gap:3px;">';
+        html += '      <i class="fa-solid fa-check"></i> Terima';
+        html += '    </button>';
+        html += '    <button class="btn-verifikasi tolak" onclick="verifikasiSampah(\'' + item.id + '\',\'ditolak\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#dc2626;color:white;display:flex;align-items:center;gap:3px;">';
+        html += '      <i class="fa-solid fa-xmark"></i> Tolak';
+        html += '    </button>';
         html += '    <button class="btn-verifikasi detail" onclick="showDetailVerifikasi(\'' + item.id + '\')" style="padding:4px 12px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:#3b82f6;color:white;display:flex;align-items:center;gap:3px;">';
         html += '      <i class="fa-solid fa-eye"></i> Detail';
         html += '    </button>';
@@ -586,14 +575,12 @@ function showDetailVerifikasi(id) {
                         <button onclick="document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:1px solid #e2e8f0;border-radius:4px;background:white;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;">
                             Tutup
                         </button>
-                        ${item.status === 'menunggu' ? `
                         <button onclick="verifikasiSampah('${item.id}','diverifikasi');document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:none;border-radius:4px;background:#16a34a;color:white;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
                             <i class="fa-solid fa-check"></i> Terima
                         </button>
                         <button onclick="verifikasiSampah('${item.id}','ditolak');document.getElementById('modalDetailVerifikasi').style.display='none'" style="padding:6px 16px;border:none;border-radius:4px;background:#dc2626;color:white;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
                             <i class="fa-solid fa-xmark"></i> Tolak
                         </button>
-                        ` : ''}
                     </div>
                 </div>
             </div>
